@@ -11,6 +11,14 @@ const JWT_SECRET = 'pastebin-secret-key-2024';
 
 app.use(cors());
 app.use(express.json());
+
+app.use((req, res, next) => {
+  if (req.path.endsWith('.sqlite') || req.path.includes('database.sqlite')) {
+    return res.status(403).send('Forbidden');
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 const authenticate = (req, res, next) => {
