@@ -1,9 +1,9 @@
-# PasteBin
+# Code PasteBin
 
 简约不失优美的代码分享平台
 
 <p align="center">
-  <img src="public/favicon.svg" alt="PasteBin Logo" width="64" height="64">
+  <img src="public/favicon/favicon-32x32.png" alt="Code PasteBin Logo" width="64" height="64">
 </p>
 
 <p align="center">
@@ -17,7 +17,7 @@
 
 ## 项目简介
 
-PasteBin 是一个面向开发者的轻量级代码分享平台，采用 **Bootstrap 5** 架构，秉承"简约不失优美，实用美学主义"的设计理念。
+Code PasteBin 是一个面向开发者的轻量级代码分享平台，采用 **Bootstrap 5** 架构，秉承"简约不失优美，实用美学主义"的设计理念。
 
 **在线演示**: https://wenyinos.com
 
@@ -68,7 +68,7 @@ PasteBin 是一个面向开发者的轻量级代码分享平台，采用 **Boots
 
 | 左侧 | 中间 | 右侧 |
 |------|------|------|
-| PasteBin 品牌 | 新建代码片段按钮（仅登录） | 登录/注册、用户名、退出、项目主页 |
+| Code PasteBin 品牌 | 新建代码片段按钮（仅登录） | 登录/注册、用户名、退出、项目主页 |
 
 ## 快速开始
 
@@ -158,9 +158,11 @@ Authorization: Bearer <token>
 PasteBin/
 ├── public/
 │   ├── index.html         # 前端页面
-│   ├── favicon.png        # PNG 图标 (64x64)
-│   ├── favicon.svg        # SVG 矢量图标
-│   └── robots.txt         # 阻止搜索引擎
+│   └── favicon/           # Favicon 图标目录
+│       ├── favicon.ico
+│       ├── favicon-32x32.png
+│       ├── favicon-16x16.png
+│       └── apple-touch-icon.png
 ├── db.js                  # SQLite 数据库初始化
 ├── server.js              # Express 后端服务
 ├── package.json           # 项目配置
