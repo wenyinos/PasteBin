@@ -12,7 +12,7 @@ const db = require('./db');
 const path = require('path');
 
 const app = express();
-const PORT = 3000;
+const PORT = 3331
 const JWT_SECRET = 'pastebin-secret-key-2024';
 const captchaStore = new Map();
 
