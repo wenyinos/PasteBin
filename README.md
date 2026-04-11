@@ -39,9 +39,9 @@ PasteBin 是一个面向开发者的轻量级代码分享平台，采用 **Boots
 | 分类 | 技术 |
 |------|------|
 | **前端** | Bootstrap 5.3, Prism.js 1.29, Bootstrap Icons 1.11 |
-| **后端** | Node.js, Express.js 4.18 |
-| **数据库** | better-sqlite3 9.2 |
-| **认证** | jsonwebtoken 9.0, bcryptjs 2.4 |
+| **后端** | Node.js, Express.js 5.2 |
+| **数据库** | better-sqlite3 12.8 |
+| **认证** | jsonwebtoken 9.0, bcryptjs 3.0 |
 | **其他** | cors 2.8, crypto (内置) |
 
 ## UI 设计
