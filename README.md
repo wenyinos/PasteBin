@@ -19,7 +19,7 @@
 
 Code PasteBin 是一个面向开发者的轻量级代码分享平台，采用 **Bootstrap 5** 架构，秉承"简约不失优美，实用美学主义"的设计理念。
 
-**在线演示**: https://wenyinos.com
+**在线演示**: https://paste.wenyinos.com
 
 ## 功能特性
 
