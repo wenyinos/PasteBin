@@ -59,7 +59,4 @@ PasteBin/
 
 GPL v3 © 2026 wenyinos
 
-## 联系方式
 
-- 邮箱: ruojiner@hotmail.com
-- 项目主页: https://wenyinos.com
