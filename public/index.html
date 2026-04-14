@@ -317,7 +317,7 @@
         <div class="card-header d-flex justify-content-between align-items-center">
           <span><i class="bi bi-person-circle me-2"></i>来自: <strong id="pasteAuthor"></strong></span>
           <div>
-            <span id=\"displayPasteLanguage\" class=\"badge bg-secondary me-2\"></span>
+            <span id="displayPasteLanguage" class="badge bg-secondary me-2"></span>
             <small class="text-muted" id="pasteTime"><i class="bi bi-clock me-1"></i></small>
           </div>
         </div>
@@ -545,92 +545,68 @@
       const shortCode = getQueryParam('s');
       console.log('loadPublicPaste, shortCode:', shortCode);
       if (!shortCode) return false;
-      
+
       try {
         const url = '/api/paste/' + shortCode;
         console.log('Fetching:', url);
         const res = await fetch(url);
         console.log('Response status:', res.status);
-        if (!res.ok) return false;
-        
+        if (!res.ok) {
+          console.error('Failed to fetch paste, status:', res.status);
+          return false;
+        }
+
         const paste = await res.json();
         console.log('Paste:', paste);
+        
+        // 设置公共视图内容
         document.getElementById('pasteAuthor').textContent = paste.username;
         document.getElementById('pasteTime').textContent = new Date(paste.created_at).toLocaleString();
         document.getElementById('displayPasteLanguage').textContent = langLabels[paste.language] || paste.language;
+        
         const codeEl = document.getElementById('publicContent');
-        codeEl.className = `language-${paste.language}`;
+        codeEl.className = '';
+        codeEl.classList.add('language-' + (paste.language || 'plaintext'));
         codeEl.textContent = paste.content;
+        
         try {
           Prism.highlightElement(codeEl);
         } catch (e) {
           console.warn('Prism highlight failed:', e);
         }
-        const fullUrl = window.location.origin + '?s=' + paste.short_code;
+        
+        const fullUrl = window.location.origin + window.location.pathname + '?s=' + paste.short_code;
         document.getElementById('shareLink').href = fullUrl;
-        document.getElementById('shareLink').textContent = '分享链接: ' + fullUrl;
+        document.getElementById('shareLink').innerHTML = '<i class="bi bi-link-45deg me-1"></i>分享链接: ' + fullUrl;
+        
+        // 切换视图显示
         document.getElementById('mainSection').style.display = 'none';
         document.getElementById('publicView').style.display = 'block';
+        
         return true;
-      } catch (e) { 
-        console.error('loadPublicPaste error:', e);
-        return false; 
-      }
-    }
-
-    function updateNav() {
-      if (token) {
-        const user = JSON.parse(atob(token.split('.')[1]));
-        document.getElementById('usernameDisplay').textContent = user.username;
-        document.getElementById('userNav').style.display = 'flex';
-        document.getElementById('guestNav').style.display = 'none';
-        document.getElementById('newPasteBtn').style.display = 'inline-block';
-      } else {
-        document.getElementById('userNav').style.display = 'none';
-        document.getElementById('guestNav').style.display = 'flex';
-        document.getElementById('newPasteBtn').style.display = 'none';
-      }
-    }
-
-    async function loadAllPastes() {
-      try {
-        const res = await fetch('/api/pastes/all');
-        if (!res.ok) throw new Error('API error: ' + res.status);
-        const pastes = await res.json();
-        const list = document.getElementById('pastesList');
-        if (!pastes.length) {
-          list.innerHTML = '<p class="text-muted text-center">暂无内容</p>';
-          return;
-        }
-        list.innerHTML = pastes.map(p => `
-          <div class="card paste-card">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <div>
-                  <span class="badge bg-secondary">${langLabels[p.language] || p.language}</span>
-                  <span class="text-muted ms-2">${p.username}</span>
-                  <small class="text-muted ms-2">${new Date(p.created_at).toLocaleString()}</small>
-                </div>
-                <a href="?s=${p.short_code}" class="btn btn-sm btn-outline-primary">访问</a>
-              </div>
-              <div class="paste-summary">${escapeHtml(p.content)}</div>
-            </div>
-          </div>
-        `).join('');
       } catch (e) {
-        console.error(e);
-        document.getElementById('pastesList').innerHTML = '<p class="text-muted text-center">加载失败: ' + (e.message || e.toString()) + '</p>';
+        console.error('loadPublicPaste error:', e);
+        return false;
       }
     }
 
     function updateNav() {
-      if (token) {
-        const user = JSON.parse(atob(token.split('.')[1]));
-        document.getElementById('usernameDisplay').textContent = user.username;
-        document.getElementById('userNav').style.display = 'flex';
-        document.getElementById('guestNav').style.display = 'none';
-        document.getElementById('newPasteBtn').style.display = 'inline-block';
-      } else {
+      try {
+        if (token) {
+          const user = JSON.parse(atob(token.split('.')[1]));
+          document.getElementById('usernameDisplay').textContent = user.username;
+          document.getElementById('userNav').style.display = 'flex';
+          document.getElementById('guestNav').style.display = 'none';
+          document.getElementById('newPasteBtn').style.display = 'inline-block';
+        } else {
+          document.getElementById('userNav').style.display = 'none';
+          document.getElementById('guestNav').style.display = 'flex';
+          document.getElementById('newPasteBtn').style.display = 'none';
+        }
+      } catch (e) {
+        console.error('updateNav error:', e);
+        token = null;
+        localStorage.removeItem('token');
         document.getElementById('userNav').style.display = 'none';
         document.getElementById('guestNav').style.display = 'flex';
         document.getElementById('newPasteBtn').style.display = 'none';
@@ -646,6 +622,11 @@
         if (!res.ok) throw new Error('API error: ' + res.status);
         const pastes = await res.json();
         console.log('Got pastes:', pastes.length);
+        
+        // 确保显示主内容区域,隐藏公共视图
+        document.getElementById('mainSection').style.display = 'block';
+        document.getElementById('publicView').style.display = 'none';
+        
         const list = document.getElementById('pastesList');
         if (!pastes.length) {
           list.innerHTML = '<p class="text-muted text-center">暂无内容</p>';
@@ -675,6 +656,9 @@
         `}).join('');
       } catch (e) {
         console.error(e);
+        // 确保显示主内容区域,隐藏公共视图
+        document.getElementById('mainSection').style.display = 'block';
+        document.getElementById('publicView').style.display = 'none';
         const errorMsg = e.message || e.toString() || 'Unknown error';
         document.getElementById('pastesList').innerHTML = '<p class="text-muted text-center">加载失败: ' + errorMsg + '</p>';
       }
