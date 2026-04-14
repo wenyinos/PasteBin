@@ -317,7 +317,7 @@
         <div class="card-header d-flex justify-content-between align-items-center">
           <span><i class="bi bi-person-circle me-2"></i>来自: <strong id="pasteAuthor"></strong></span>
           <div>
-            <span id="pasteLanguage" class="badge bg-secondary me-2"></span>
+            <span id=\"displayPasteLanguage\" class=\"badge bg-secondary me-2\"></span>
             <small class="text-muted" id="pasteTime"><i class="bi bi-clock me-1"></i></small>
           </div>
         </div>
@@ -557,7 +557,7 @@
         console.log('Paste:', paste);
         document.getElementById('pasteAuthor').textContent = paste.username;
         document.getElementById('pasteTime').textContent = new Date(paste.created_at).toLocaleString();
-        document.getElementById('pasteLanguage').textContent = langLabels[paste.language] || paste.language;
+        document.getElementById('displayPasteLanguage').textContent = langLabels[paste.language] || paste.language;
         const codeEl = document.getElementById('publicContent');
         codeEl.className = `language-${paste.language}`;
         codeEl.textContent = paste.content;
