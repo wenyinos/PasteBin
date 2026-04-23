@@ -13,16 +13,26 @@ const path = require('path');
 
 const app = express();
 const PORT = 3331
-const JWT_SECRET = 'pastebin-secret-key-2024';
+const JWT_SECRET = process.env.JWT_SECRET || 'pastebin-secret-key-2024';
 const captchaStore = new Map();
 
+function trimCaptchaStore(maxSize = 10000, targetSize = 9000) {
+  if (captchaStore.size <= maxSize) return;
+  while (captchaStore.size > targetSize) {
+    const oldestKey = captchaStore.keys().next().value;
+    if (!oldestKey) break;
+    captchaStore.delete(oldestKey);
+  }
+}
+
 function generateCaptcha() {
+  trimCaptchaStore();
   const a = Math.floor(Math.random() * 10) + 1;
   const b = Math.floor(Math.random() * 10) + 1;
   const op = Math.random() > 0.5 ? '+' : '-';
   const answer = op === '+' ? a + b : a - b;
   const key = crypto.randomBytes(8).toString('hex');
-  captchaStore.set(key, answer);
+  captchaStore.set(key, { answer, attempts: 0 });
   setTimeout(() => captchaStore.delete(key), 300000);
   return { key, question: `${a} ${op} ${b} = ?` };
 }
@@ -70,9 +80,13 @@ app.get('/api/captcha', (req, res) => {
 
 // Verify captcha
 const verifyCaptcha = (key, answer) => {
-  const stored = captchaStore.get(key);
-  if (!stored) return false;
-  return parseInt(answer) === stored;
+  const entry = captchaStore.get(key);
+  if (!entry) return false;
+
+  entry.attempts += 1;
+  const ok = parseInt(answer, 10) === entry.answer;
+  if (ok || entry.attempts >= 5) captchaStore.delete(key);
+  return ok;
 };
 
 app.post('/api/register', async (req, res) => {

@@ -514,6 +514,35 @@
       sql: 'SQL', bash: 'Bash', powershell: 'PowerShell', dockerfile: 'Dockerfile'
     };
 
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text ?? '';
+      return div.innerHTML;
+    }
+
+    function decodeJwtPayload(jwtToken) {
+      try {
+        if (!jwtToken) return null;
+        const parts = jwtToken.split('.');
+        if (parts.length < 2) return null;
+
+        // JWT uses base64url; normalize for atob()
+        let payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        while (payload.length % 4 !== 0) payload += '=';
+
+        return JSON.parse(atob(payload));
+      } catch {
+        return null;
+      }
+    }
+
+    function getCurrentUser() {
+      const payload = decodeJwtPayload(token);
+      if (!payload || typeof payload !== 'object') return null;
+      if (!payload.username) return null;
+      return payload;
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
       console.log('Page loaded');
       authModal = new bootstrap.Modal(document.getElementById('authModal'));
@@ -593,7 +622,8 @@
     function updateNav() {
       try {
         if (token) {
-          const user = JSON.parse(atob(token.split('.')[1]));
+          const user = getCurrentUser();
+          if (!user) throw new Error('Invalid token payload');
           document.getElementById('usernameDisplay').textContent = user.username;
           document.getElementById('userNav').style.display = 'flex';
           document.getElementById('guestNav').style.display = 'none';
@@ -632,15 +662,18 @@
           list.innerHTML = '<p class="text-muted text-center">暂无内容</p>';
           return;
         }
+        const currentUser = getCurrentUser();
         list.innerHTML = pastes.map(p => {
-          const isOwner = token && JSON.parse(atob(token.split('.')[1])).username === p.username;
+          const isOwner = !!(currentUser && currentUser.username === p.username);
+          const safeUsername = escapeHtml(p.username);
+          const safeLanguage = escapeHtml(langLabels[p.language] || p.language);
           return `
           <div class="card paste-card">
             <div class="card-body">
               <div class="d-flex justify-content-between align-items-start mb-2">
                 <div>
-                  <span class="badge bg-secondary"><i class="bi bi-code-square me-1"></i>${langLabels[p.language] || p.language}</span>
-                  <span class="text-muted ms-2"><i class="bi bi-person me-1"></i>${p.username}</span>
+                  <span class="badge bg-secondary"><i class="bi bi-code-square me-1"></i>${safeLanguage}</span>
+                  <span class="text-muted ms-2"><i class="bi bi-person me-1"></i>${safeUsername}</span>
                   <small class="text-muted ms-2"><i class="bi bi-clock me-1"></i>${new Date(p.created_at).toLocaleString()}</small>
                 </div>
                 <div>
@@ -662,12 +695,6 @@
         const errorMsg = e.message || e.toString() || 'Unknown error';
         document.getElementById('pastesList').innerHTML = '<p class="text-muted text-center">加载失败: ' + errorMsg + '</p>';
       }
-    }
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
     }
 
     async function deletePaste(id) {
@@ -769,11 +796,23 @@
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ content, language })
       });
-      if (res.ok) {
-        const data = await res.json();
-        createModal.hide();
-        window.location.href = '?s=' + data.short_code;
+      if (!res.ok) {
+        let msg = `创建失败 (${res.status})`;
+        try {
+          const data = await res.json();
+          if (data && data.error) msg = data.error;
+        } catch {}
+        alert(msg);
+        if (res.status === 401) {
+          token = null;
+          localStorage.removeItem('token');
+          updateNav();
+        }
+        return;
       }
+      const data = await res.json();
+      createModal.hide();
+      window.location.href = '?s=' + data.short_code;
     }
 
     document.getElementById('logoutBtn').onclick = () => {

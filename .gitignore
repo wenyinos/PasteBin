@@ -1,2 +1,5 @@
 node_modules/*
 database.sqlite
+.codex
+GEMINI.md
+.marscode/deviceInfo.json
