@@ -8,15 +8,25 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const fs = require('fs');
 const db = require('./db');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = 3331
-const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
-if (!process.env.JWT_SECRET) {
-  console.warn('WARNING: JWT_SECRET not set, using random value (tokens will be invalidated on restart)');
+
+// JWT Secret: 环境变量 > 持久化文件 > 自动生成并保存
+const JWT_SECRET_FILE = path.join(__dirname, '.jwt-secret');
+let JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  try {
+    JWT_SECRET = fs.readFileSync(JWT_SECRET_FILE, 'utf8').trim();
+  } catch {
+    JWT_SECRET = crypto.randomBytes(32).toString('hex');
+    fs.writeFileSync(JWT_SECRET_FILE, JWT_SECRET);
+    console.log('Generated new JWT_SECRET and saved to .jwt-secret');
+  }
 }
 const captchaStore = new Map();
 
