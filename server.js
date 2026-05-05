@@ -100,17 +100,6 @@ const authLimiter = rateLimit({
 app.use('/api/login', authLimiter);
 app.use('/api/register', authLimiter);
 
-// CSRF 防护 - 校验 Origin/Referer
-app.use((req, res, next) => {
-  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
-    const origin = req.headers.origin;
-    if (origin && !allowedOrigins.some(o => origin === o)) {
-      return res.status(403).json({ error: 'CSRF 校验失败' });
-    }
-  }
-  next();
-});
-
 // Block database access
 app.use((req, res, next) => {
   if (req.path.endsWith('.sqlite') || req.path.includes('database.sqlite')) {
