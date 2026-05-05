@@ -153,10 +153,9 @@
     /* 代码块样式 */
     pre {
       margin: 0;
-      background: #2d2d2d;
+      background: #191a30;
       border-radius: 6px;
       padding: 15px;
-      max-height: 400px;
       overflow: auto;
     }
 
@@ -328,6 +327,9 @@
           <a id="shareLink" href="#" class="btn btn-sm btn-outline-primary">
             <i class="bi bi-link-45deg me-1"></i>分享链接
           </a>
+          <button class="btn btn-sm btn-outline-success ms-2" onclick="copyAllCode()">
+            <i class="bi bi-clipboard me-1"></i>全部复制
+          </button>
         </div>
       </div>
     </div>
@@ -684,6 +686,22 @@
       } catch (e) {
         alert('删除失败: ' + e.message);
       }
+    }
+
+    function copyAllCode() {
+      const code = document.getElementById('publicContent').textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = event.target.closest('button');
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="bi bi-check me-1"></i>已复制';
+        btn.disabled = true;
+        setTimeout(() => {
+          btn.innerHTML = originalHtml;
+          btn.disabled = false;
+        }, 2000);
+      }).catch(() => {
+        alert('复制失败，请手动选择复制');
+      });
     }
 
     function showAuthModal(type) {
