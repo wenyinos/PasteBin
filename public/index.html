@@ -153,7 +153,7 @@
     /* 代码块样式 */
     pre {
       margin: 0;
-      background: #191a30;
+      background: #1f1e34;
       border-radius: 6px;
       padding: 15px;
       overflow: auto;
@@ -327,7 +327,7 @@
           <a id="shareLink" href="#" class="btn btn-sm btn-outline-primary">
             <i class="bi bi-link-45deg me-1"></i>分享链接
           </a>
-          <button class="btn btn-sm btn-outline-success ms-2" onclick="copyAllCode()">
+          <button class="btn btn-sm btn-outline-success ms-2" onclick="copyAllCode(this)">
             <i class="bi bi-clipboard me-1"></i>全部复制
           </button>
         </div>
@@ -688,20 +688,40 @@
       }
     }
 
-    function copyAllCode() {
+    function copyAllCode(btn) {
       const code = document.getElementById('publicContent').textContent;
-      navigator.clipboard.writeText(code).then(() => {
-        const btn = event.target.closest('button');
-        const originalHtml = btn.innerHTML;
+      const originalHtml = btn.innerHTML;
+
+      function onSuccess() {
         btn.innerHTML = '<i class="bi bi-check me-1"></i>已复制';
         btn.disabled = true;
         setTimeout(() => {
           btn.innerHTML = originalHtml;
           btn.disabled = false;
         }, 2000);
-      }).catch(() => {
-        alert('复制失败，请手动选择复制');
-      });
+      }
+
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(code).then(onSuccess).catch(() => fallbackCopy());
+      } else {
+        fallbackCopy();
+      }
+
+      function fallbackCopy() {
+        const textarea = document.createElement('textarea');
+        textarea.value = code;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand('copy');
+          onSuccess();
+        } catch {
+          alert('复制失败，请手动选择复制');
+        }
+        document.body.removeChild(textarea);
+      }
     }
 
     function showAuthModal(type) {
