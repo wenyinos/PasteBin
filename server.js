@@ -10,10 +10,14 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const db = require('./db');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = 3331
-const JWT_SECRET = process.env.JWT_SECRET || 'pastebin-secret-key-2024';
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
+if (!process.env.JWT_SECRET) {
+  console.warn('WARNING: JWT_SECRET not set, using random value (tokens will be invalidated on restart)');
+}
 const captchaStore = new Map();
 
 function trimCaptchaStore(maxSize = 10000, targetSize = 9000) {
@@ -27,10 +31,28 @@ function trimCaptchaStore(maxSize = 10000, targetSize = 9000) {
 
 function generateCaptcha() {
   trimCaptchaStore();
-  const a = Math.floor(Math.random() * 10) + 1;
-  const b = Math.floor(Math.random() * 10) + 1;
-  const op = Math.random() > 0.5 ? '+' : '-';
-  const answer = op === '+' ? a + b : a - b;
+  const ops = ['+', '-', '×'];
+  const op = ops[Math.floor(Math.random() * ops.length)];
+  let a, b, answer;
+
+  switch (op) {
+    case '+':
+      a = Math.floor(Math.random() * 50) + 1;
+      b = Math.floor(Math.random() * 50) + 1;
+      answer = a + b;
+      break;
+    case '-':
+      a = Math.floor(Math.random() * 50) + 10;
+      b = Math.floor(Math.random() * a) + 1;
+      answer = a - b;
+      break;
+    case '×':
+      a = Math.floor(Math.random() * 12) + 2;
+      b = Math.floor(Math.random() * 12) + 2;
+      answer = a * b;
+      break;
+  }
+
   const key = crypto.randomBytes(8).toString('hex');
   captchaStore.set(key, { answer, attempts: 0 });
   setTimeout(() => captchaStore.delete(key), 300000);
@@ -38,17 +60,54 @@ function generateCaptcha() {
 }
 
 function generateShortCode() {
-  return crypto.randomBytes(4).toString('hex');
+  return crypto.randomBytes(8).toString('hex');
 }
 
-app.use(cors());
-app.use(express.json());
-
-// CORS headers
+// 安全头 - 手动设置（避免 helmet 对 CSP 的限制）
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '0');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('Content-Security-Policy',
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline' cdn.jsdelivr.net; " +
+    "script-src-attr 'unsafe-inline'; " +
+    "style-src 'self' 'unsafe-inline' cdn.jsdelivr.net; " +
+    "font-src 'self' cdn.jsdelivr.net data:; " +
+    "img-src 'self' data:; " +
+    "connect-src 'self'; " +
+    "base-uri 'self'; " +
+    "form-action 'self'; " +
+    "frame-ancestors 'self'; " +
+    "object-src 'none'"
+  );
+  next();
+});
+
+// CORS 配置 - 限制允许的来源
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3331').split(',');
+app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use(express.json({ limit: '512kb' }));
+
+// 速率限制 - 认证接口防暴力破解
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: '请求过于频繁，请稍后再试' }
+});
+app.use('/api/login', authLimiter);
+app.use('/api/register', authLimiter);
+
+// CSRF 防护 - 校验 Origin/Referer
+app.use((req, res, next) => {
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    const origin = req.headers.origin;
+    if (origin && !allowedOrigins.some(o => origin === o)) {
+      return res.status(403).json({ error: 'CSRF 校验失败' });
+    }
+  }
   next();
 });
 
@@ -91,17 +150,23 @@ const verifyCaptcha = (key, answer) => {
 
 app.post('/api/register', async (req, res) => {
   const { username, password, captchaKey, captchaAnswer } = req.body;
-  if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
+  if (!username || !password) return res.status(400).json({ error: '用户名和密码不能为空' });
+  if (typeof username !== 'string' || username.trim().length < 3 || username.trim().length > 32) {
+    return res.status(400).json({ error: '用户名长度需在3-32个字符之间' });
+  }
+  if (typeof password !== 'string' || password.length < 8) {
+    return res.status(400).json({ error: '密码至少需要8个字符' });
+  }
   if (!captchaKey || !captchaAnswer || !verifyCaptcha(captchaKey, captchaAnswer)) {
-    return res.status(400).json({ error: 'Invalid captcha' });
+    return res.status(400).json({ error: '验证码错误' });
   }
   try {
     const hashed = await bcrypt.hash(password, 10);
-    const result = db.prepare('INSERT INTO users (username, password) VALUES (?, ?)').run(username, hashed);
-    res.json({ message: 'User created', userId: result.lastInsertRowid });
+    const result = db.prepare('INSERT INTO users (username, password) VALUES (?, ?)').run(username.trim(), hashed);
+    res.json({ message: '注册成功', userId: result.lastInsertRowid });
   } catch (err) {
-    if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') res.status(400).json({ error: 'Username already exists' });
-    else res.status(500).json({ error: 'Server error' });
+    // 统一错误消息，防止用户名枚举
+    res.status(400).json({ error: '注册失败，请稍后重试' });
   }
 });
 
@@ -127,7 +192,10 @@ app.get('/api/pastes/all', (req, res) => {
 
 app.post('/api/pastes', authenticate, (req, res) => {
   const { content, language = 'plaintext' } = req.body;
-  if (!content) return res.status(400).json({ error: 'Content required' });
+  const allowedLanguages = ['plaintext', 'javascript', 'typescript', 'python', 'java', 'csharp', 'cpp', 'c', 'go', 'rust', 'php', 'ruby', 'swift', 'kotlin', 'html', 'css', 'scss', 'json', 'xml', 'yaml', 'markdown', 'sql', 'bash', 'powershell', 'dockerfile'];
+  if (!content || typeof content !== 'string') return res.status(400).json({ error: '内容不能为空' });
+  if (content.length > 100000) return res.status(400).json({ error: '内容不能超过100KB' });
+  if (!allowedLanguages.includes(language)) return res.status(400).json({ error: '不支持的语言类型' });
   const shortCode = generateShortCode();
   const result = db.prepare('INSERT INTO pastes (user_id, short_code, content, language) VALUES (?, ?, ?, ?)').run(req.userId, shortCode, content, language);
   res.json({ id: result.lastInsertRowid, short_code: shortCode, content, language, created_at: new Date().toISOString() });
@@ -148,5 +216,11 @@ app.delete('/api/pastes/:id', authenticate, (req, res) => {
 // Static files
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
+// 全局错误处理 (Express v5)
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: '服务器内部错误' });
+});
 
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
