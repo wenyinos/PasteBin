@@ -45,341 +45,123 @@
       font-display: swap;
       src: url(/fonts/nunito-sans-700.ttf) format('truetype');
     }
-    :root {
-      --primary-color: #5cb85c;
-      --primary-hover: #4cae4c;
-      --secondary-color: #f8f9fa;
-      --text-color: #333;
-      --text-muted: #6c757d;
-      --border-color: #e5e5e5;
-      --card-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      --card-hover-shadow: 0 4px 16px rgba(0,0,0,0.12);
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      background-color: #fafafa;
-      color: var(--text-color);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", "Helvetica Neue", Arial, sans-serif;
-      line-height: 1.6;
-    }
-
-    /* 导航栏样式 */
-    .navbar {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      padding: 0.8rem 0;
-    }
-
-    .navbar .container {
-      flex-wrap: nowrap;
-    }
-
-    .navbar-brand {
-      font-weight: 600;
-      font-size: 1.4rem;
-      letter-spacing: 0.5px;
-      flex-shrink: 0;
-    }
-
-    .navbar-brand:hover {
-      opacity: 0.9;
-    }
-
-    #userNav, #guestNav {
-      flex-shrink: 0;
-    }
-
-    /* 按钮样式 */
-    .btn {
-      border-radius: 6px;
-      padding: 0.4rem 1rem;
-      font-weight: 500;
-      transition: all 0.2s ease;
-    }
-
-    .btn-sm {
-      padding: 0.25rem 0.75rem;
-      font-size: 0.875rem;
-    }
-
-    .btn-outline-light:hover {
-      background-color: rgba(255,255,255,0.95);
-      color: #667eea;
-    }
-
-    .btn-outline-primary {
-      border-color: var(--primary-color);
-      color: var(--primary-color);
-    }
-
-    .btn-outline-primary:hover {
-      background-color: var(--primary-color);
-      border-color: var(--primary-color);
-      color: white;
-    }
-
-    .btn-primary {
-      background-color: var(--primary-color);
-      border-color: var(--primary-color);
-    }
-
-    .btn-primary:hover {
-      background-color: var(--primary-hover);
-      border-color: var(--primary-hover);
-    }
-
-    /* 卡片样式 */
-    .card {
-      border: none;
-      border-radius: 8px;
-      box-shadow: var(--card-shadow);
-      transition: all 0.3s ease;
-      margin-bottom: 1rem;
-    }
-
-    .card:hover {
-      box-shadow: var(--card-hover-shadow);
-      transform: translateY(-2px);
-    }
-
-    .card-header {
-      background-color: #fff;
-      border-bottom: 1px solid var(--border-color);
-      font-weight: 500;
-    }
-
-    .card-body {
-      padding: 1.25rem;
-    }
-
-    .paste-card {
-      margin-bottom: 15px;
-    }
-
-    .paste-summary {
-      white-space: pre-wrap;
-      word-break: break-all;
-      max-height: 60px;
-      overflow: hidden;
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      line-height: 1.5;
-    }
-
-    /* 徽章样式 */
-    .badge {
-      padding: 0.4em 0.8em;
-      font-weight: 500;
-      border-radius: 4px;
-    }
-
-    .bg-secondary {
-      background-color: #6c757d !important;
-    }
 
     /* 代码块样式 */
     pre {
       margin: 0;
       background: #1f1e34 !important;
-      border-radius: 6px;
-      padding: 15px;
+      border-radius: .3rem;
+      padding: 1rem;
       overflow: auto;
     }
-
     code {
       font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
-      font-size: 14px;
+      font-size: 0.875rem;
       background: transparent !important;
     }
 
-    .paste-content {
+    /* 代码摘要 */
+    .paste-summary {
       white-space: pre-wrap;
       word-break: break-all;
-      background: #fff;
-      padding: 15px;
-      border-radius: 6px;
-      border: 1px solid var(--border-color);
-      max-height: 200px;
-      overflow-y: auto;
-    }
-
-    /* 分享链接样式 */
-    .share-link {
-      word-break: break-all;
-    }
-
-    /* 区块标题样式 */
-    .section-title {
-      font-weight: 600;
-      color: var(--text-color);
-      margin-bottom: 1.5rem;
-      position: relative;
-      padding-left: 12px;
-    }
-
-    .section-title::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 4px;
-      height: 24px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 2px;
-    }
-
-    /* 模态框样式 */
-    .modal-content {
-      border: none;
-      border-radius: 10px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-    }
-
-    .modal-header {
-      border-bottom: 1px solid var(--border-color);
-      background-color: #fafafa;
-      border-radius: 10px 10px 0 0;
-    }
-
-    .modal-body {
-      padding: 1.5rem;
-    }
-
-    .form-control, .form-select {
-      border-radius: 6px;
-      border: 1px solid var(--border-color);
-      padding: 0.6rem 0.9rem;
-    }
-
-    .form-control:focus, .form-select:focus {
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 0.2rem rgba(92, 184, 92, 0.25);
-    }
-
-    /* 页脚样式 */
-    footer {
-      background-color: #fff;
-      border-top: 1px solid var(--border-color) !important;
-      margin-top: 3rem;
-    }
-
-    /* 响应式调整 */
-    @media (max-width: 768px) {
-      .navbar .container {
-        flex-wrap: wrap;
-      }
-
-      .navbar-brand {
-        font-size: 1.2rem;
-      }
-      
-      .card {
-        margin-bottom: 0.75rem;
-      }
+      max-height: 60px;
+      overflow: hidden;
+      color: #6b7280;
+      font-size: 0.875rem;
+      line-height: 1.5;
     }
 
     /* 加载动画 */
     @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
+    .paste-card { animation: fadeIn 0.3s ease; }
 
-    .paste-card {
-      animation: fadeIn 0.3s ease;
-    }
-
-    /* 链接样式 */
-    a {
-      color: var(--primary-color);
-      text-decoration: none;
-      transition: color 0.2s ease;
-    }
-
-    a:hover {
-      color: var(--primary-hover);
-      text-decoration: underline;
-    }
+    /* 分享链接 */
+    .share-link { word-break: break-all; }
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-    <div class="container">
-      <a class="navbar-brand" href="?">Code PasteBin</a>
 
-      <!-- 居中新建代码片段按钮 -->
-      <div class="flex-grow-1 d-flex justify-content-center align-items-center">
-        <button id="newPasteBtn" class="btn btn-light btn-sm" onclick="showCreateModal()" style="display:none;">
-          <i class="bi bi-plus-circle me-1"></i>新建代码片段
-        </button>
-      </div>
+  <!-- 导航栏 -->
+  <header class="header-global">
+    <nav id="navbar-main" class="navbar navbar-expand-lg navbar-theme-primary headroom navbar-dark">
+      <div class="container position-relative">
+        <a class="navbar-brand me-lg-3" href="?">Code PasteBin</a>
 
-      <!-- 用户导航 -->
-      <div class="d-flex align-items-center">
-        <div id="userNav" style="display:none;">
-          <span id="usernameDisplay" class="navbar-text me-3"></span>
-          <button id="logoutBtn" class="btn btn-outline-light btn-sm me-2">退出</button>
+        <!-- 居中新建按钮 -->
+        <div class="flex-grow-1 d-none d-lg-flex justify-content-center">
+          <button id="newPasteBtn" class="btn btn-tertiary btn-sm" onclick="showCreateModal()" style="display:none;">
+            <i class="bi bi-plus-circle me-1"></i>新建代码片段
+          </button>
         </div>
-        <div id="guestNav">
-          <button class="btn btn-outline-light btn-sm me-2" onclick="showAuthModal('login')">登录</button>
-          <button class="btn btn-outline-light btn-sm me-2" onclick="showAuthModal('register')">注册</button>
-        </div>
-        <a href="https://wenyinos.com" class="btn btn-outline-light btn-sm" target="_blank">
-          <i class="bi bi-house me-1"></i>项目主页
-        </a>
-      </div>
-    </div>
-  </nav>
 
-  <div class="container">
-    <!-- 公共查看视图 -->
-    <div id="publicView" style="display:none;">
-      <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <span><i class="bi bi-person-circle me-2"></i>来自: <strong id="pasteAuthor"></strong></span>
-          <div>
-            <span id="displayPasteLanguage" class="badge bg-secondary me-2"></span>
-            <small class="text-muted" id="pasteTime"><i class="bi bi-clock me-1"></i></small>
+        <!-- 右侧导航 -->
+        <div class="d-flex align-items-center">
+          <div id="userNav" style="display:none;">
+            <span id="usernameDisplay" class="text-white me-3 font-small"></span>
+            <button id="logoutBtn" class="btn btn-outline-white btn-sm me-2">退出</button>
           </div>
-        </div>
-        <div class="card-body">
-          <pre><code id="publicContent" class="language-plaintext"></code></pre>
-        </div>
-        <div class="card-footer bg-white">
-          <a id="shareLink" href="#" class="btn btn-sm btn-outline-primary">
-            <i class="bi bi-link-45deg me-1"></i>分享链接
+          <div id="guestNav">
+            <button class="btn btn-outline-white btn-sm me-2" onclick="showAuthModal('login')">登录</button>
+            <button class="btn btn-outline-white btn-sm me-2" onclick="showAuthModal('register')">注册</button>
+          </div>
+          <a href="https://wenyinos.com" class="btn btn-outline-white btn-sm d-none d-lg-inline-flex" target="_blank">
+            <i class="bi bi-house me-1"></i>项目主页
           </a>
-          <button class="btn btn-sm btn-outline-success ms-2" onclick="copyAllCode(this)">
-            <i class="bi bi-clipboard me-1"></i>全部复制
+          <button class="navbar-toggler ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMobile">
+            <span class="navbar-toggler-icon"></span>
           </button>
         </div>
       </div>
-    </div>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 公共查看视图 -->
+    <section class="section section-sm" id="publicView" style="display:none;">
+      <div class="container">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-person-circle me-2"></i>来自: <strong id="pasteAuthor"></strong></span>
+            <div>
+              <span id="displayPasteLanguage" class="badge bg-tertiary me-2"></span>
+              <small class="text-gray font-small" id="pasteTime"><i class="bi bi-clock me-1"></i></small>
+            </div>
+          </div>
+          <div class="card-body">
+            <pre><code id="publicContent" class="language-plaintext"></code></pre>
+          </div>
+          <div class="card-footer bg-white border-0">
+            <a id="shareLink" href="#" class="btn btn-sm btn-tertiary">
+              <i class="bi bi-link-45deg me-1"></i>分享链接
+            </a>
+            <button class="btn btn-sm btn-outline-soft ms-2" onclick="copyAllCode(this)">
+              <i class="bi bi-clipboard me-1"></i>全部复制
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- 主内容区域 -->
-    <div id="mainSection">
-      <div class="row mb-4">
-        <div class="col">
-          <h4 class="section-title d-inline mb-0">最新分享</h4>
-          <button class="btn btn-sm btn-outline-secondary ms-3" onclick="loadAllPastes()">
+    <section class="section section-sm" id="mainSection">
+      <div class="container">
+        <div class="d-flex align-items-center mb-4">
+          <h4 class="fw-bold mb-0">最新分享</h4>
+          <button class="btn btn-sm btn-outline-soft ms-3" onclick="loadAllPastes()">
             <i class="bi bi-arrow-clockwise me-1"></i>刷新
           </button>
         </div>
+        <div id="pastesList" data-v="20260410a"></div>
       </div>
-      <div id="pastesList" data-v="20260410a"></div>
-    </div>
-  </div>
+    </section>
+  </main>
 
+  <!-- 登录/注册模态框 -->
   <div class="modal fade" id="authModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="authModalTitle">登录</h5>
@@ -400,11 +182,11 @@
               <label class="form-label">验证码</label>
               <div class="input-group">
                 <input type="text" class="form-control" id="loginCaptcha" placeholder="请输入答案" required>
-                <button class="btn btn-outline-secondary" type="button" onclick="refreshCaptcha()">刷新</button>
+                <button class="btn btn-outline-soft" type="button" onclick="refreshCaptcha()">刷新</button>
               </div>
-              <div id="loginCaptchaQuestion" class="text-muted small mt-1"></div>
+              <div id="loginCaptchaQuestion" class="text-gray font-small mt-1"></div>
             </div>
-            <button type="submit" class="btn btn-primary w-100">登录</button>
+            <button type="submit" class="btn btn-tertiary w-100">登录</button>
             </form>
           </div>
           <div id="registerForm" style="display:none;">
@@ -421,11 +203,11 @@
               <label class="form-label">验证码</label>
               <div class="input-group">
                 <input type="text" class="form-control" id="registerCaptcha" placeholder="请输入答案" required>
-                <button class="btn btn-outline-secondary" type="button" onclick="refreshCaptcha()">刷新</button>
+                <button class="btn btn-outline-soft" type="button" onclick="refreshCaptcha()">刷新</button>
               </div>
-              <div id="registerCaptchaQuestion" class="text-muted small mt-1"></div>
+              <div id="registerCaptchaQuestion" class="text-gray font-small mt-1"></div>
             </div>
-            <button type="submit" class="btn btn-success w-100">注册</button>
+            <button type="submit" class="btn btn-tertiary w-100">注册</button>
             </form>
           </div>
         </div>
@@ -433,8 +215,9 @@
     </div>
   </div>
 
+  <!-- 新建Paste模态框 -->
   <div class="modal fade" id="createModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">新建Paste</h5>
@@ -472,21 +255,29 @@
             </select>
           </div>
           <textarea class="form-control mb-3" id="pasteContent" rows="10" placeholder="输入内容..."></textarea>
-          <button class="btn btn-primary" onclick="doCreatePaste()">保存</button>
+          <button class="btn btn-tertiary" onclick="doCreatePaste()">
+            <i class="bi bi-check-lg me-1"></i>保存
+          </button>
         </div>
       </div>
     </div>
   </div>
 
-  <footer class="text-center text-muted py-4 mt-5">
+  <!-- 页脚 -->
+  <footer class="footer pt-5 pb-4 bg-dark text-white">
     <div class="container">
-      <p class="mb-2">
-        <strong>Code PasteBin</strong>
-        <a href="https://github.com/wenyinos/PasteBin" target="_blank" class="text-muted ms-2">
-          <i class="bi bi-github"></i> GitHub
-        </a>
-      </p>
-      <small>Copyleft &copy; 玟茵开源社区 2013-2026</small>
+      <div class="d-flex flex-column align-items-center">
+        <p class="fw-bold mb-2">Code PasteBin</p>
+        <div class="mb-2">
+          <a href="https://github.com/wenyinos/PasteBin" target="_blank" class="text-white text-decoration-none me-3">
+            <i class="bi bi-github"></i> GitHub
+          </a>
+          <a href="https://wenyinos.com" target="_blank" class="text-white text-decoration-none">
+            <i class="bi bi-house"></i> 项目主页
+          </a>
+        </div>
+        <small class="text-gray">Copyleft &copy; 玟茵开源社区 2013-2026</small>
+      </div>
     </div>
   </footer>
 
@@ -545,11 +336,8 @@
         if (!jwtToken) return null;
         const parts = jwtToken.split('.');
         if (parts.length < 2) return null;
-
-        // JWT uses base64url; normalize for atob()
         let payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
         while (payload.length % 4 !== 0) payload += '=';
-
         return JSON.parse(atob(payload));
       } catch {
         return null;
@@ -569,12 +357,9 @@
       updateNav();
 
       const shortCode = getQueryParam('s');
-
       if (shortCode) {
         const loaded = await loadPublicPaste();
-        if (!loaded) {
-          await loadAllPastes();
-        }
+        if (!loaded) await loadAllPastes();
       } else {
         await loadAllPastes();
       }
@@ -589,38 +374,29 @@
       if (!shortCode) return false;
 
       try {
-        const url = '/api/paste/' + shortCode;
-        const res = await fetch(url);
-        if (!res.ok) {
-          return false;
-        }
+        const res = await fetch('/api/paste/' + shortCode);
+        if (!res.ok) return false;
 
         const paste = await res.json();
-        
-        // 设置公共视图内容
+
         document.getElementById('pasteAuthor').textContent = paste.username;
         document.getElementById('pasteTime').textContent = new Date(paste.created_at).toLocaleString();
         document.getElementById('displayPasteLanguage').textContent = langLabels[paste.language] || paste.language;
-        
+
         const codeEl = document.getElementById('publicContent');
         codeEl.className = '';
         codeEl.classList.add('language-' + (paste.language || 'plaintext'));
         codeEl.textContent = paste.content;
-        
-        try {
-          Prism.highlightElement(codeEl);
-        } catch (e) {
-          console.warn('Prism highlight failed:', e);
-        }
-        
+
+        try { Prism.highlightElement(codeEl); } catch (e) { console.warn('Prism highlight failed:', e); }
+
         const fullUrl = window.location.origin + window.location.pathname + '?s=' + paste.short_code;
         document.getElementById('shareLink').href = fullUrl;
         document.getElementById('shareLink').innerHTML = '<i class="bi bi-link-45deg me-1"></i>分享链接: ' + fullUrl;
-        
-        // 切换视图显示
+
         document.getElementById('mainSection').style.display = 'none';
         document.getElementById('publicView').style.display = 'block';
-        
+
         return true;
       } catch (e) {
         return false;
@@ -653,18 +429,16 @@
 
     async function loadAllPastes() {
       try {
-        const url = '/api/pastes/all';
-        const res = await fetch(url);
+        const res = await fetch('/api/pastes/all');
         if (!res.ok) throw new Error('API error: ' + res.status);
         const pastes = await res.json();
-        
-        // 确保显示主内容区域,隐藏公共视图
+
         document.getElementById('mainSection').style.display = 'block';
         document.getElementById('publicView').style.display = 'none';
-        
+
         const list = document.getElementById('pastesList');
         if (!pastes.length) {
-          list.innerHTML = '<p class="text-muted text-center">暂无内容</p>';
+          list.innerHTML = '<p class="text-gray text-center font-small">暂无内容</p>';
           return;
         }
         const currentUser = getCurrentUser();
@@ -673,16 +447,16 @@
           const safeUsername = escapeHtml(p.username);
           const safeLanguage = escapeHtml(langLabels[p.language] || p.language);
           return `
-          <div class="card paste-card">
-            <div class="card-body">
+          <div class="card border-0 shadow-sm paste-card mb-3">
+            <div class="card-body p-4">
               <div class="d-flex justify-content-between align-items-start mb-2">
                 <div>
-                  <span class="badge bg-secondary"><i class="bi bi-code-square me-1"></i>${safeLanguage}</span>
-                  <span class="text-muted ms-2"><i class="bi bi-person me-1"></i>${safeUsername}</span>
-                  <small class="text-muted ms-2"><i class="bi bi-clock me-1"></i>${new Date(p.created_at).toLocaleString()}</small>
+                  <span class="badge bg-tertiary"><i class="bi bi-code-square me-1"></i>${safeLanguage}</span>
+                  <span class="text-gray font-small ms-2"><i class="bi bi-person me-1"></i>${safeUsername}</span>
+                  <small class="text-gray font-small ms-2"><i class="bi bi-clock me-1"></i>${new Date(p.created_at).toLocaleString()}</small>
                 </div>
                 <div>
-                  <a href="?s=${p.short_code}" class="btn btn-sm btn-outline-primary">
+                  <a href="?s=${p.short_code}" class="btn btn-sm btn-tertiary">
                     <i class="bi bi-eye me-1"></i>访问
                   </a>
                   ${isOwner ? `<button class="btn btn-sm btn-outline-danger ms-1" onclick="deletePaste(${p.id})"><i class="bi bi-trash me-1"></i>删除</button>` : ''}
@@ -694,12 +468,11 @@
         `}).join('');
       } catch (e) {
         console.error(e);
-        // 确保显示主内容区域,隐藏公共视图
         document.getElementById('mainSection').style.display = 'block';
         document.getElementById('publicView').style.display = 'none';
         const errorMsg = e.message || e.toString() || 'Unknown error';
         const errP = document.createElement('p');
-        errP.className = 'text-muted text-center';
+        errP.className = 'text-gray text-center font-small';
         errP.textContent = '加载失败: ' + errorMsg;
         document.getElementById('pastesList').textContent = '';
         document.getElementById('pastesList').appendChild(errP);
@@ -713,9 +486,8 @@
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` }
         });
-        if (res.ok) {
-          loadAllPastes();
-        } else {
+        if (res.ok) loadAllPastes();
+        else {
           const data = await res.json();
           alert(data.error || '删除失败');
         }
@@ -731,10 +503,7 @@
       function onSuccess() {
         btn.innerHTML = '<i class="bi bi-check me-1"></i>已复制';
         btn.disabled = true;
-        setTimeout(() => {
-          btn.innerHTML = originalHtml;
-          btn.disabled = false;
-        }, 2000);
+        setTimeout(() => { btn.innerHTML = originalHtml; btn.disabled = false; }, 2000);
       }
 
       if (navigator.clipboard) {
@@ -750,12 +519,8 @@
         textarea.style.opacity = '0';
         document.body.appendChild(textarea);
         textarea.select();
-        try {
-          document.execCommand('copy');
-          onSuccess();
-        } catch {
-          alert('复制失败，请手动选择复制');
-        }
+        try { document.execCommand('copy'); onSuccess(); }
+        catch { alert('复制失败，请手动选择复制'); }
         document.body.removeChild(textarea);
       }
     }
@@ -786,8 +551,8 @@
       const res = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          username: document.getElementById('loginUsername').value, 
+        body: JSON.stringify({
+          username: document.getElementById('loginUsername').value,
           password: document.getElementById('loginPassword').value,
           captchaKey: captchaKey,
           captchaAnswer: document.getElementById('loginCaptcha').value
@@ -810,8 +575,8 @@
       const res = await fetch(`${API_URL}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          username: document.getElementById('registerUsername').value, 
+        body: JSON.stringify({
+          username: document.getElementById('registerUsername').value,
           password: document.getElementById('registerPassword').value,
           captchaKey: captchaKey,
           captchaAnswer: document.getElementById('registerCaptcha').value
@@ -843,10 +608,7 @@
       });
       if (!res.ok) {
         let msg = `创建失败 (${res.status})`;
-        try {
-          const data = await res.json();
-          if (data && data.error) msg = data.error;
-        } catch {}
+        try { const data = await res.json(); if (data && data.error) msg = data.error; } catch {}
         alert(msg);
         if (res.status === 401) {
           token = null;
