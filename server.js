@@ -82,10 +82,10 @@ app.use((req, res, next) => {
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   res.setHeader('Content-Security-Policy',
     "default-src 'self'; " +
-    "script-src 'self' 'unsafe-inline' cdn.jsdelivr.net; " +
+    "script-src 'self' 'unsafe-inline'; " +
     "script-src-attr 'unsafe-inline'; " +
-    "style-src 'self' 'unsafe-inline' cdn.jsdelivr.net; " +
-    "font-src 'self' cdn.jsdelivr.net data:; " +
+    "style-src 'self' 'unsafe-inline'; " +
+    "font-src 'self' data:; " +
     "img-src 'self' data:; " +
     "connect-src 'self'; " +
     "base-uri 'self'; " +
