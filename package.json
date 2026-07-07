@@ -15,5 +15,8 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "prismjs": "^1.30.0"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.8.0": true
   }
 }
