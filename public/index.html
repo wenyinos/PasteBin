@@ -387,6 +387,7 @@
         </div>
         <div class="modal-body">
           <div id="loginForm">
+            <form onsubmit="event.preventDefault(); doLogin();">
             <div class="mb-3">
               <label class="form-label">用户名</label>
               <input type="text" class="form-control" id="loginUsername" required>
@@ -403,9 +404,11 @@
               </div>
               <div id="loginCaptchaQuestion" class="text-muted small mt-1"></div>
             </div>
-            <button type="submit" class="btn btn-primary w-100" onclick="doLogin()">登录</button>
+            <button type="submit" class="btn btn-primary w-100">登录</button>
+            </form>
           </div>
           <div id="registerForm" style="display:none;">
+            <form onsubmit="event.preventDefault(); doRegister();">
             <div class="mb-3">
               <label class="form-label">用户名</label>
               <input type="text" class="form-control" id="registerUsername" required>
@@ -422,7 +425,8 @@
               </div>
               <div id="registerCaptchaQuestion" class="text-muted small mt-1"></div>
             </div>
-            <button type="submit" class="btn btn-success w-100" onclick="doRegister()">注册</button>
+            <button type="submit" class="btn btn-success w-100">注册</button>
+            </form>
           </div>
         </div>
       </div>
@@ -487,6 +491,7 @@
   </footer>
 
   <script src="/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/smooth-scroll.min.js"></script>
   <script src="/js/pixel.js"></script>
   <script src="/js/prism.js"></script>
   <script src="/js/components/prism-markup.min.js"></script>
