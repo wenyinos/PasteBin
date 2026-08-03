@@ -1,2 +1,126 @@
-User-agent: *
+# robots.txt — 阻止常见搜索与 AI 爬虫
+# 适用：网站根目录，例如 https://example.com/robots.txt
+#
+# 说明：
+# 1. robots.txt 是"君子协议"，仅对遵守规范的爬虫生效
+# 2. 如需保留搜索引擎收录，请删除对应 UA 段（如 Googlebot / Bingbot / Baiduspider）
+
+# ---- 搜索引擎爬虫 ----
+User-agent: Googlebot
+Disallow: /
+
+User-agent: Bingbot
+Disallow: /
+
+User-agent: Baiduspider
+Disallow: /
+
+User-agent: YisouSpider
+Disallow: /
+
+User-agent: Sogou web spider
+Disallow: /
+
+User-agent: Sogou inst spider
+Disallow: /
+
+User-agent: Sogou spider2
+Disallow: /
+
+User-agent: 360Spider
+Disallow: /
+
+User-agent: DuckDuckBot
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+
+User-agent: Yeti
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: YandexBot
+Disallow: /
+
+# ---- AI 训练 / 浏览爬虫 ----
+User-agent: GPTBot
+Disallow: /
+
+User-agent: OAI-SearchBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: GoogleOther
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: cohere-ai
+Disallow: /
+
+User-agent: Diffbot
+Disallow: /
+
+User-agent: FacebookBot
+Disallow: /
+
+User-agent: Meta-ExternalAgent
+Disallow: /
+
+User-agent: imagesiftbot
+Disallow: /
+
+User-agent: img2dataset
+Disallow: /
+
+User-agent: KangarooBot
+Disallow: /
+
+User-agent: Scrapy
+Disallow: /
+
+# ---- SEO / 数据采集爬虫 ----
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: DataForSeoBot
+Disallow: /
+
+User-agent: Barkrowler
 Disallow: /
