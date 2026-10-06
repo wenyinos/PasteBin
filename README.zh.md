@@ -10,8 +10,11 @@
 - 创建代码片段并生成短链接（16 位十六进制 short code）
 - 公开查看最新 50 条代码片段
 - Prism.js 语法高亮（25+ 语言）
+- 日间/夜间主题切换（记忆偏好，默认跟随系统）
+- 紫色主题设计（参照玟茵开源社区）
 - 图形验证码（算术题）保护注册/登录
 - 响应式页面，移动端可用
+- 资源全本地托管（字体/CSS/JS），无 CDN 依赖，可离线运行
 
 ## 快速开始
 
@@ -26,7 +29,7 @@ npm start
 
 - 后端: `server.js`（Express 5.2，所有 API 与服务逻辑）
 - 数据库: `db.js` 初始化 SQLite schema，`database.sqlite` 首次启动自动创建
-- 前端: `public/index.html`（单页应用，内含 HTML/CSS/JS）
+- 前端: `public/index.html`（页面结构与脚本）、`public/css/theme.css`（主题设计系统）、`public/js/theme.js`（主题切换）
 
 ## API 一览
 
@@ -54,7 +57,7 @@ npm start
 
 | 分类 | 技术 |
 |------|------|
-| 前端 | Bootstrap 5, Prism.js, Bootstrap Icons |
+| 前端 | Bootstrap 5, Prism.js, Bootstrap Icons, 本地 woff2 字体 |
 | 后端 | Node.js, Express 5.2 |
 | 数据库 | SQLite（better-sqlite3） |
 | 认证 | jsonwebtoken, bcryptjs |

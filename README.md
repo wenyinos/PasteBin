@@ -10,8 +10,11 @@ Live demo: https://paste.wenyinos.com
 - Create code snippets with short links (16-hex-digit short code)
 - Browse latest 50 public snippets
 - Prism.js syntax highlighting (25+ languages)
+- Light / dark theme toggle (persisted, defaults to system preference)
+- Purple design system styled after wenyinos.com
 - CAPTCHA (arithmetic puzzle) for registration / login protection
 - Responsive design, mobile-friendly
+- Fully self-hosted assets (fonts, CSS, JS) — no CDN, works offline
 
 ## Quick Start
 
@@ -26,7 +29,7 @@ Default address: `http://localhost:3331`
 
 - Backend: `server.js` (Express 5.2, all API and service logic)
 - Database: `db.js` initializes SQLite schema; `database.sqlite` auto-created on first run
-- Frontend: `public/index.html` (single-page app with HTML/CSS/JS)
+- Frontend: `public/index.html` (markup + page JS), `public/css/theme.css` (design system), `public/js/theme.js` (theme toggle)
 
 ## API Overview
 
@@ -54,7 +57,7 @@ Default address: `http://localhost:3331`
 
 | Category | Technology |
 |----------|-----------|
-| Frontend | Bootstrap 5, Prism.js, Bootstrap Icons |
+| Frontend | Bootstrap 5, Prism.js, Bootstrap Icons, self-hosted woff2 fonts |
 | Backend | Node.js, Express 5.2 |
 | Database | SQLite (better-sqlite3) |
 | Auth | jsonwebtoken, bcryptjs |
