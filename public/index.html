@@ -134,11 +134,11 @@
             <form onsubmit="event.preventDefault(); doLogin();">
             <div class="mb-3">
               <label class="form-label">用户名</label>
-              <input type="text" class="form-control" id="loginUsername" required>
+              <input type="text" class="form-control" id="loginUsername" autocomplete="username" required>
             </div>
             <div class="mb-3">
               <label class="form-label">密码</label>
-              <input type="password" class="form-control" id="loginPassword" required>
+              <input type="password" class="form-control" id="loginPassword" autocomplete="current-password" required>
             </div>
             <div class="mb-3">
               <label class="form-label">验证码</label>
@@ -155,11 +155,11 @@
             <form onsubmit="event.preventDefault(); doRegister();">
             <div class="mb-3">
               <label class="form-label">用户名</label>
-              <input type="text" class="form-control" id="registerUsername" required>
+              <input type="text" class="form-control" id="registerUsername" autocomplete="username" required>
             </div>
             <div class="mb-3">
               <label class="form-label">密码</label>
-              <input type="password" class="form-control" id="registerPassword" required>
+              <input type="password" class="form-control" id="registerPassword" autocomplete="new-password" required>
             </div>
             <div class="mb-3">
               <label class="form-label">验证码</label>
