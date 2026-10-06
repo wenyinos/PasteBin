@@ -14,153 +14,83 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
   <link href="/css/bootstrap.min.css" rel="stylesheet">
   <link href="/css/bootstrap-icons.min.css" rel="stylesheet">
-  <link href="/css/pixel.css" rel="stylesheet">
   <link href="/css/prism-tomorrow.min.css" rel="stylesheet">
-  <style>
-    @font-face {
-      font-family: 'Nunito Sans';
-      font-style: normal;
-      font-weight: 300;
-      font-display: swap;
-      src: url(/fonts/nunito-sans-300.ttf) format('truetype');
-    }
-    @font-face {
-      font-family: 'Nunito Sans';
-      font-style: normal;
-      font-weight: 400;
-      font-display: swap;
-      src: url(/fonts/nunito-sans-400.ttf) format('truetype');
-    }
-    @font-face {
-      font-family: 'Nunito Sans';
-      font-style: normal;
-      font-weight: 600;
-      font-display: swap;
-      src: url(/fonts/nunito-sans-600.ttf) format('truetype');
-    }
-    @font-face {
-      font-family: 'Nunito Sans';
-      font-style: normal;
-      font-weight: 700;
-      font-display: swap;
-      src: url(/fonts/nunito-sans-700.ttf) format('truetype');
-    }
-
-    /* 暗色主题 */
-    body {
-      background-color: #1c2540;
-      color: #e5e7eb;
-    }
-    .card { background-color: #242e4c; color: #e5e7eb; }
-    .card-header, .card-footer { background-color: #1f2b47; border-color: #2d3a5c; }
-    .paste-summary { color: #9ca3af; }
-    .text-gray { color: #9ca3af !important; }
-    footer { background-color: #171f38 !important; }
-
-    /* 导航栏品牌 */
-    .navbar-brand {
-      color: #fff !important;
-      font-size: 1.4rem;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-    }
-    pre {
-      margin: 0;
-      background: #1f1e34 !important;
-      border-radius: .3rem;
-      padding: 1rem;
-      overflow: auto;
-    }
-    code {
-      font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
-      font-size: 0.875rem;
-      background: transparent !important;
-    }
-
-    /* 代码摘要 */
-    .paste-summary {
-      white-space: pre-wrap;
-      word-break: break-all;
-      max-height: 80px;
-      overflow: hidden;
-      color: #4b5563;
-      font-size: 0.95rem;
-      line-height: 1.6;
-    }
-
-    /* 增大内容元素 */
-    .card-body { padding: 1.5rem; }
-    .badge { font-size: 0.85rem; padding: 0.45em 0.9em; }
-    .font-small { font-size: 0.9rem !important; }
-    .paste-card .card-body { padding: 1.75rem; }
-
-    /* 加载动画 */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .paste-card { animation: fadeIn 0.3s ease; }
-
-    /* 分享链接 */
-    .share-link { word-break: break-all; }
-  </style>
+  <link href="/css/theme.css" rel="stylesheet">
+  <script>
+    /* 尽早设置主题，避免页面闪烁 */
+    (function () {
+      var t = localStorage.getItem('theme');
+      if (!t) {
+        t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
 </head>
 <body>
 
   <!-- 导航栏 -->
-  <header class="header-global">
-    <nav id="navbar-main" class="navbar navbar-expand-lg navbar-theme-primary headroom navbar-dark">
-      <div class="container position-relative">
-        <a class="navbar-brand me-lg-3" href="?">Code PasteBin</a>
+  <nav id="navbar-main" class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+      <a class="navbar-brand" href="?">
+        <span class="brand-mark"><i class="bi bi-code-slash"></i></span>Code PasteBin
+      </a>
 
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMobile"
+              aria-controls="navbarMobile" aria-expanded="false" aria-label="切换导航">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarMobile">
         <!-- 居中新建按钮 -->
-        <div class="flex-grow-1 d-flex justify-content-center">
-          <button id="newPasteBtn" class="btn btn-tertiary btn-sm" onclick="showCreateModal()" style="display:none;">
+        <div class="d-flex justify-content-center flex-grow-1 my-2 my-lg-0">
+          <button id="newPasteBtn" class="btn-nav-ghost" onclick="showCreateModal()" style="display:none;">
             <i class="bi bi-plus-circle me-1"></i>新建代码片段
           </button>
         </div>
 
         <!-- 右侧导航 -->
-        <div class="d-flex align-items-center">
-          <div id="userNav" style="display:none;">
-            <span id="usernameDisplay" class="text-white me-3 font-small"></span>
-            <button id="logoutBtn" class="btn btn-white btn-sm me-2">退出</button>
+        <div class="d-flex align-items-center justify-content-center justify-content-lg-end gap-2">
+          <div id="userNav" class="align-items-center gap-2" style="display:none;">
+            <span id="usernameDisplay" class="nav-text font-small"></span>
+            <button id="logoutBtn" class="btn-nav-ghost">退出</button>
           </div>
-          <div id="guestNav">
-            <button class="btn btn-white btn-sm me-2" onclick="showAuthModal('login')">登录</button>
-            <button class="btn btn-white btn-sm me-2" onclick="showAuthModal('register')">注册</button>
+          <div id="guestNav" class="align-items-center gap-2" style="display:none;">
+            <button class="btn-nav-ghost" onclick="showAuthModal('login')">登录</button>
+            <button class="btn-nav-solid" onclick="showAuthModal('register')">注册</button>
           </div>
-          <a href="https://wenyinos.com" class="btn btn-outline-white btn-sm d-none d-lg-inline-flex" target="_blank">
+          <a href="https://wenyinos.com" class="btn-nav-ghost d-none d-lg-inline-flex" target="_blank">
             <i class="bi bi-house me-1"></i>项目主页
           </a>
-          <button class="navbar-toggler ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMobile">
-            <span class="navbar-toggler-icon"></span>
+          <button id="themeToggle" class="theme-toggle" type="button" title="切换日间/夜间模式" aria-label="切换日间/夜间模式">
+            <i class="bi bi-moon-stars"></i>
+            <i class="bi bi-sun"></i>
           </button>
         </div>
       </div>
-    </nav>
-  </header>
+    </div>
+  </nav>
 
   <main>
     <!-- 公共查看视图 -->
     <section class="section" id="publicView" style="display:none;">
       <div class="container">
-        <div class="card border-0 shadow-sm">
-          <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="paste-card">
+          <div class="paste-card-head d-flex justify-content-between align-items-center">
             <span><i class="bi bi-person-circle me-2"></i>来自: <strong id="pasteAuthor"></strong></span>
             <div>
-              <span id="displayPasteLanguage" class="badge bg-tertiary me-2"></span>
-              <small class="text-gray font-small" id="pasteTime"><i class="bi bi-clock me-1"></i></small>
+              <span id="displayPasteLanguage" class="badge-soft me-2"></span>
+              <small class="text-soft font-small" id="pasteTime"><i class="bi bi-clock me-1"></i></small>
             </div>
           </div>
-          <div class="card-body">
+          <div class="paste-card-body">
             <pre><code id="publicContent" class="language-plaintext"></code></pre>
           </div>
-          <div class="card-footer bg-white border-0">
-            <a id="shareLink" href="#" class="btn btn-sm btn-tertiary">
+          <div class="paste-card-foot">
+            <a id="shareLink" href="#" class="btn-brand-outline">
               <i class="bi bi-link-45deg me-1"></i>分享链接
             </a>
-            <button class="btn btn-sm btn-primary ms-2" onclick="copyAllCode(this)">
+            <button class="btn-brand ms-2" onclick="copyAllCode(this)">
               <i class="bi bi-clipboard me-1"></i>全部复制
             </button>
           </div>
@@ -169,15 +99,24 @@
     </section>
 
     <!-- 主内容区域 -->
-    <section class="section" id="mainSection">
-      <div class="container">
-        <div class="d-flex align-items-center mb-4">
-          <h4 class="fw-bold mb-0 h3">最新分享</h4>
-          <button class="btn btn-sm btn-tertiary ms-3" onclick="loadAllPastes()">
-            <i class="bi bi-arrow-clockwise me-1"></i>刷新
-          </button>
+    <section id="mainSection">
+      <!-- Hero 标题区 -->
+      <div class="hero">
+        <h1 class="hero-title">Code PasteBin</h1>
+        <p class="hero-tagline">简洁 · 优雅 · 快速 · 可靠</p>
+        <p class="hero-desc mb-0">基于 Node.js 与 SQLite 的轻量代码粘贴服务</p>
+      </div>
+
+      <div class="section">
+        <div class="container">
+          <div class="d-flex align-items-center mb-4">
+            <h4 class="section-title mb-0 h3">最新分享</h4>
+            <button class="btn-brand-outline ms-3" onclick="loadAllPastes()">
+              <i class="bi bi-arrow-clockwise me-1"></i>刷新
+            </button>
+          </div>
+          <div id="pastesList" data-v="20260410a"></div>
         </div>
-        <div id="pastesList" data-v="20260410a"></div>
       </div>
     </section>
   </main>
@@ -185,7 +124,7 @@
   <!-- 登录/注册模态框 -->
   <div class="modal fade" id="authModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content modal-tertiary">
+      <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="authModalTitle">登录</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -205,11 +144,11 @@
               <label class="form-label">验证码</label>
               <div class="input-group">
                 <input type="text" class="form-control" id="loginCaptcha" placeholder="请输入答案" required>
-                <button class="btn btn-tertiary" type="button" onclick="refreshCaptcha()">刷新</button>
+                <button class="btn-brand-outline" type="button" onclick="refreshCaptcha()">刷新</button>
               </div>
-              <div id="loginCaptchaQuestion" class="text-gray font-small mt-1"></div>
+              <div id="loginCaptchaQuestion" class="text-soft font-small mt-1"></div>
             </div>
-            <button type="submit" class="btn btn-tertiary w-100">登录</button>
+            <button type="submit" class="btn-brand w-100">登录</button>
             </form>
           </div>
           <div id="registerForm" style="display:none;">
@@ -226,11 +165,11 @@
               <label class="form-label">验证码</label>
               <div class="input-group">
                 <input type="text" class="form-control" id="registerCaptcha" placeholder="请输入答案" required>
-                <button class="btn btn-tertiary" type="button" onclick="refreshCaptcha()">刷新</button>
+                <button class="btn-brand-outline" type="button" onclick="refreshCaptcha()">刷新</button>
               </div>
-              <div id="registerCaptchaQuestion" class="text-gray font-small mt-1"></div>
+              <div id="registerCaptchaQuestion" class="text-soft font-small mt-1"></div>
             </div>
-            <button type="submit" class="btn btn-tertiary w-100">注册</button>
+            <button type="submit" class="btn-brand w-100">注册</button>
             </form>
           </div>
         </div>
@@ -278,7 +217,7 @@
             </select>
           </div>
           <textarea class="form-control mb-3" id="pasteContent" rows="10" placeholder="输入内容..."></textarea>
-          <button class="btn btn-tertiary" onclick="doCreatePaste()">
+          <button class="btn-brand" onclick="doCreatePaste()">
             <i class="bi bi-check-lg me-1"></i>保存
           </button>
         </div>
@@ -287,26 +226,24 @@
   </div>
 
   <!-- 页脚 -->
-  <footer class="footer pt-5 pb-4 bg-dark text-white">
+  <footer class="footer pt-5 pb-4">
     <div class="container">
       <div class="d-flex flex-column align-items-center">
         <p class="fw-bold mb-2">Code PasteBin</p>
         <div class="mb-2">
-          <a href="https://github.com/wenyinos/PasteBin" target="_blank" class="text-white text-decoration-none me-3">
+          <a href="https://github.com/wenyinos/PasteBin" target="_blank" class="me-3">
             <i class="bi bi-github"></i> GitHub
           </a>
-          <a href="https://wenyinos.com" target="_blank" class="text-white text-decoration-none">
+          <a href="https://wenyinos.com" target="_blank">
             <i class="bi bi-house"></i> 项目主页
           </a>
         </div>
-        <small class="text-gray">Copyleft &copy; 玟茵开源社区 2013-2026</small>
+        <small class="text-soft">Copyleft &copy; 玟茵开源社区 2013-2026</small>
       </div>
     </div>
   </footer>
 
   <script src="/js/bootstrap.bundle.min.js"></script>
-  <script src="/js/smooth-scroll.min.js"></script>
-  <script src="/js/pixel.js"></script>
   <script src="/js/prism.js"></script>
   <script src="/js/components/prism-markup.min.js"></script>
   <script src="/js/components/prism-css.min.js"></script>
@@ -333,6 +270,7 @@
   <script src="/js/components/prism-bash.min.js"></script>
   <script src="/js/components/prism-powershell.min.js"></script>
   <script src="/js/components/prism-docker.min.js"></script>
+  <script src="/js/theme.js"></script>
   <script>
     const API_URL = '/api';
     let token = localStorage.getItem('token');
@@ -419,6 +357,7 @@
 
         document.getElementById('mainSection').style.display = 'none';
         document.getElementById('publicView').style.display = 'block';
+        document.body.classList.add('view-detail');
 
         return true;
       } catch (e) {
@@ -434,7 +373,7 @@
           document.getElementById('usernameDisplay').textContent = user.username;
           document.getElementById('userNav').style.display = 'flex';
           document.getElementById('guestNav').style.display = 'none';
-          document.getElementById('newPasteBtn').style.display = 'inline-block';
+          document.getElementById('newPasteBtn').style.display = 'inline-flex';
         } else {
           document.getElementById('userNav').style.display = 'none';
           document.getElementById('guestNav').style.display = 'flex';
@@ -458,10 +397,11 @@
 
         document.getElementById('mainSection').style.display = 'block';
         document.getElementById('publicView').style.display = 'none';
+        document.body.classList.remove('view-detail');
 
         const list = document.getElementById('pastesList');
         if (!pastes.length) {
-          list.innerHTML = '<p class="text-gray text-center font-small">暂无内容</p>';
+          list.innerHTML = '<p class="text-soft text-center font-small">暂无内容</p>';
           return;
         }
         const currentUser = getCurrentUser();
@@ -470,16 +410,16 @@
           const safeUsername = escapeHtml(p.username);
           const safeLanguage = escapeHtml(langLabels[p.language] || p.language);
           return `
-          <div class="card border-0 shadow-sm paste-card mb-3">
-            <div class="card-body p-4">
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <div>
-                  <span class="badge bg-tertiary"><i class="bi bi-code-square me-1"></i>${safeLanguage}</span>
-                  <span class="text-gray font-small ms-2"><i class="bi bi-person me-1"></i>${safeUsername}</span>
-                  <small class="text-gray font-small ms-2"><i class="bi bi-clock me-1"></i>${new Date(p.created_at).toLocaleString()}</small>
+          <div class="paste-card mb-3">
+            <div class="paste-card-body">
+              <div class="paste-meta-row d-flex justify-content-between align-items-start mb-2">
+                <div class="paste-meta">
+                  <span class="badge-soft"><i class="bi bi-code-square me-1"></i>${safeLanguage}</span>
+                  <span class="text-soft font-small ms-2"><i class="bi bi-person me-1"></i>${safeUsername}</span>
+                  <small class="text-soft font-small ms-2"><i class="bi bi-clock me-1"></i>${new Date(p.created_at).toLocaleString()}</small>
                 </div>
-                <div>
-                  <a href="?s=${p.short_code}" class="btn btn-sm btn-tertiary">
+                <div class="paste-actions">
+                  <a href="?s=${p.short_code}" class="btn-brand-outline">
                     <i class="bi bi-eye me-1"></i>访问
                   </a>
                   ${isOwner ? `<button class="btn btn-sm btn-outline-danger ms-1" onclick="deletePaste(${p.id})"><i class="bi bi-trash me-1"></i>删除</button>` : ''}
@@ -493,9 +433,10 @@
         console.error(e);
         document.getElementById('mainSection').style.display = 'block';
         document.getElementById('publicView').style.display = 'none';
+        document.body.classList.remove('view-detail');
         const errorMsg = e.message || e.toString() || 'Unknown error';
         const errP = document.createElement('p');
-        errP.className = 'text-gray text-center font-small';
+        errP.className = 'text-soft text-center font-small';
         errP.textContent = '加载失败: ' + errorMsg;
         document.getElementById('pastesList').textContent = '';
         document.getElementById('pastesList').appendChild(errP);
