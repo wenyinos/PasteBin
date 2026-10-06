@@ -59,9 +59,6 @@
             <button class="btn-nav-ghost" onclick="showAuthModal('login')">登录</button>
             <button class="btn-nav-solid" onclick="showAuthModal('register')">注册</button>
           </div>
-          <a href="https://wenyinos.com" class="btn-nav-ghost d-none d-lg-inline-flex" target="_blank">
-            <i class="bi bi-house me-1"></i>项目主页
-          </a>
           <button id="themeToggle" class="theme-toggle" type="button" title="切换日间/夜间模式" aria-label="切换日间/夜间模式">
             <i class="bi bi-moon-stars"></i>
             <i class="bi bi-sun"></i>
@@ -100,13 +97,6 @@
 
     <!-- 主内容区域 -->
     <section id="mainSection">
-      <!-- Hero 标题区 -->
-      <div class="hero">
-        <h1 class="hero-title">Code PasteBin</h1>
-        <p class="hero-tagline">简洁 · 优雅 · 快速 · 可靠</p>
-        <p class="hero-desc mb-0">基于 Node.js 与 SQLite 的轻量代码粘贴服务</p>
-      </div>
-
       <div class="section">
         <div class="container">
           <div class="d-flex align-items-center mb-4">
@@ -357,7 +347,6 @@
 
         document.getElementById('mainSection').style.display = 'none';
         document.getElementById('publicView').style.display = 'block';
-        document.body.classList.add('view-detail');
 
         return true;
       } catch (e) {
@@ -397,7 +386,6 @@
 
         document.getElementById('mainSection').style.display = 'block';
         document.getElementById('publicView').style.display = 'none';
-        document.body.classList.remove('view-detail');
 
         const list = document.getElementById('pastesList');
         if (!pastes.length) {
@@ -433,7 +421,6 @@
         console.error(e);
         document.getElementById('mainSection').style.display = 'block';
         document.getElementById('publicView').style.display = 'none';
-        document.body.classList.remove('view-detail');
         const errorMsg = e.message || e.toString() || 'Unknown error';
         const errP = document.createElement('p');
         errP.className = 'text-soft text-center font-small';

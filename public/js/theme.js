@@ -1,4 +1,4 @@
-/* Code PasteBin — 主题切换与导航栏交互 */
+/* Code PasteBin — 主题切换 */
 (() => {
   const toggle = document.getElementById('themeToggle');
   if (toggle) {
@@ -7,12 +7,5 @@
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem('theme', next);
     });
-  }
-
-  const navbar = document.getElementById('navbar-main');
-  if (navbar) {
-    const onScroll = () => navbar.classList.toggle('scrolled', window.scrollY > 24);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
   }
 })();

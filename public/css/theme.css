@@ -85,9 +85,6 @@
   --btn-primary-fg: #ffffff;
   --btn-shadow: rgba(111, 66, 193, 0.28);
 
-  /* 导航玻璃态 */
-  --navbar-glass: rgba(252, 250, 253, 0.86);
-
   /* 表单与代码 */
   --input-bg: #ffffff;
   --focus-ring: rgba(111, 66, 193, 0.18);
@@ -133,8 +130,6 @@
   --btn-primary-bg-hover: #8e6ad6;
   --btn-primary-fg: #ffffff;
   --btn-shadow: rgba(0, 0, 0, 0.4);
-
-  --navbar-glass: rgba(20, 13, 40, 0.86);
 
   --input-bg: #1d1340;
   --focus-ring: rgba(157, 122, 232, 0.25);
@@ -247,7 +242,7 @@ a:hover {
 }
 
 /* --------------------------------------------------------------------------
-   导航栏 —— 透明叠加 hero，滚动后毛玻璃（参考站 .navbar.scrolled 效果）
+   导航栏 —— 紫色渐变固定导航（参考站 --gradient-hero）
    -------------------------------------------------------------------------- */
 .navbar {
   position: fixed;
@@ -255,28 +250,9 @@ a:hover {
   left: 0;
   right: 0;
   z-index: 1030;
-  padding: 1rem 0;
-  background: transparent;
-  transition: background-color 0.35s ease, box-shadow 0.35s ease, padding 0.35s ease;
-  /* 透明态（叠在 hero 渐变上）：白色系元素 */
-  --nav-fg: #ffffff;
-  --nav-fg-dim: rgba(255, 255, 255, 0.85);
-  --nav-border: rgba(255, 255, 255, 0.45);
-  --nav-hover-bg: rgba(255, 255, 255, 0.12);
-}
-
-.navbar.scrolled,
-body.view-detail .navbar {
-  background: var(--navbar-glass);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 1px 0 var(--border-soft), 0 4px 20px rgba(75, 44, 130, 0.06);
   padding: 0.65rem 0;
-  /* 玻璃态：主题文字色 */
-  --nav-fg: var(--text-ink);
-  --nav-fg-dim: var(--text-muted-purple);
-  --nav-border: var(--border-soft);
-  --nav-hover-bg: var(--purple-tint);
+  background: var(--gradient-hero);
+  box-shadow: 0 4px 20px rgba(59, 34, 102, 0.25);
 }
 
 .navbar-brand {
@@ -284,7 +260,7 @@ body.view-detail .navbar {
   font-size: 1.3rem;
   font-weight: 400;
   letter-spacing: 0.5px;
-  color: var(--nav-fg) !important;
+  color: #fff !important;
   display: inline-flex;
   align-items: center;
   gap: 0.55rem;
@@ -301,34 +277,34 @@ body.view-detail .navbar {
   width: 30px;
   height: 30px;
   border-radius: 8px;
-  background: var(--gradient-hero);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--purple-dark);
   font-size: 0.95rem;
-  box-shadow: 0 4px 12px rgba(75, 44, 130, 0.25);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .navbar .nav-text {
-  color: var(--nav-fg-dim);
+  color: rgba(255, 255, 255, 0.85);
 }
 
-/* 导航按钮：ghost（描边）/ solid（实底） */
+/* 导航按钮：ghost（描边）/ solid（实底），紫底上使用白色系 */
 .btn-nav-ghost {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
   padding: 0.4rem 1.1rem;
   border-radius: var(--radius-pill);
-  border: 1px solid var(--nav-border);
+  border: 1px solid rgba(255, 255, 255, 0.45);
   background: transparent;
-  color: var(--nav-fg-dim);
+  color: rgba(255, 255, 255, 0.9);
   font-size: 0.9rem;
   font-weight: 500;
 }
 .btn-nav-ghost:hover,
 .btn-nav-ghost:focus {
-  border-color: var(--nav-fg);
-  color: var(--nav-fg);
-  background: var(--nav-hover-bg);
+  border-color: #fff;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .btn-nav-solid {
@@ -339,8 +315,6 @@ body.view-detail .navbar {
   border-radius: var(--radius-pill);
   border: 1px solid transparent;
   background: rgba(255, 255, 255, 0.16);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
   color: #ffffff;
   font-size: 0.9rem;
   font-weight: 500;
@@ -351,27 +325,9 @@ body.view-detail .navbar {
   color: var(--purple-deep);
 }
 
-.navbar.scrolled .btn-nav-solid,
-body.view-detail .navbar .btn-nav-solid {
-  background: var(--purple-primary);
-}
-.navbar.scrolled .btn-nav-solid:hover,
-body.view-detail .navbar .btn-nav-solid:hover {
-  background: var(--purple-dark);
-  color: #fff;
-}
-
-/* 导航栏汉堡按钮（透明态由 navbar-dark 自带白色图标） */
+/* 导航栏汉堡按钮（navbar-dark 自带白色图标） */
 .navbar .navbar-toggler {
-  border-color: var(--nav-border);
-}
-.navbar.scrolled .navbar-toggler-icon,
-body.view-detail .navbar .navbar-toggler-icon {
-  filter: invert(1);
-}
-[data-theme="dark"] .navbar.scrolled .navbar-toggler-icon,
-[data-theme="dark"] body.view-detail .navbar .navbar-toggler-icon {
-  filter: none;
+  border-color: rgba(255, 255, 255, 0.45);
 }
 
 /* --------------------------------------------------------------------------
@@ -385,16 +341,16 @@ body.view-detail .navbar .navbar-toggler-icon {
   height: 38px;
   padding: 0;
   border-radius: 50%;
-  border: 1px solid var(--nav-border);
+  border: 1px solid rgba(255, 255, 255, 0.45);
   background: transparent;
-  color: var(--nav-fg-dim);
+  color: rgba(255, 255, 255, 0.9);
   font-size: 1rem;
 }
 .theme-toggle:hover,
 .theme-toggle:focus {
-  border-color: var(--nav-fg);
-  color: var(--nav-fg);
-  background: var(--nav-hover-bg);
+  border-color: #fff;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
 }
 [data-theme="dark"] .theme-toggle .bi-moon-stars {
   display: none;
@@ -404,78 +360,14 @@ body.view-detail .navbar .navbar-toggler-icon {
 }
 
 /* --------------------------------------------------------------------------
-   Hero —— 紫色渐变标题区（参考站 --gradient-hero）
-   -------------------------------------------------------------------------- */
-.hero {
-  position: relative;
-  min-height: 340px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 8rem 1.5rem 3.5rem;
-  background: var(--gradient-hero);
-  color: #fff;
-  overflow: hidden;
-}
-.hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse at 22% 12%, rgba(255, 255, 255, 0.10), transparent 55%),
-    radial-gradient(ellipse at 82% 88%, rgba(255, 255, 255, 0.06), transparent 50%);
-  pointer-events: none;
-}
-.hero > * {
-  position: relative;
-  z-index: 1;
-}
-.hero-title {
-  font-family: var(--font-display);
-  font-size: clamp(2.1rem, 4.5vw, 3.1rem);
-  font-weight: 400;
-  letter-spacing: 5px;
-  margin-bottom: 1rem;
-  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.15);
-  color: #fff;
-}
-.hero-tagline {
-  font-family: var(--font-serif);
-  font-weight: 700;
-  font-size: clamp(1rem, 2vw, 1.25rem);
-  letter-spacing: 7px;
-  opacity: 0.92;
-  margin-bottom: 0.9rem;
-}
-.hero-tagline::after {
-  content: '';
-  display: inline-block;
-  width: 2px;
-  height: 1em;
-  margin-left: 8px;
-  vertical-align: -0.12em;
-  background: currentColor;
-  animation: caretBlink 1.1s steps(1) infinite;
-}
-@keyframes caretBlink {
-  50% { opacity: 0; }
-}
-.hero-desc {
-  font-size: 0.95rem;
-  font-weight: 400;
-  letter-spacing: 1px;
-  opacity: 0.65;
-}
-
-/* --------------------------------------------------------------------------
    内容区与卡片
    -------------------------------------------------------------------------- */
 .section {
   padding: 3.5rem 0;
 }
-body.view-detail main {
+
+/* 为固定导航栏留出空间 */
+body > main {
   padding-top: 76px;
 }
 
@@ -658,17 +550,36 @@ code {
     margin-top: 0.75rem;
     padding: 1rem 1.1rem;
     box-shadow: var(--shadow-soft);
-    /* 面板为不透明卡片底色，内部元素始终使用主题文字色 */
-    --nav-fg: var(--text-ink);
-    --nav-fg-dim: var(--text-muted-purple);
-    --nav-border: var(--border-soft);
-    --nav-hover-bg: var(--purple-tint);
+  }
+  /* 折叠面板为不透明卡片底色，内部元素改回主题色系 */
+  .navbar-collapse .nav-text {
+    color: var(--text-ink);
+  }
+  .navbar-collapse .btn-nav-ghost {
+    border-color: var(--border-soft);
+    color: var(--text-muted-purple);
+  }
+  .navbar-collapse .btn-nav-ghost:hover,
+  .navbar-collapse .btn-nav-ghost:focus {
+    border-color: var(--purple-primary);
+    color: var(--purple-primary);
+    background: var(--purple-tint);
+  }
+  .navbar-collapse .btn-nav-solid {
+    background: var(--btn-primary-bg);
+    color: var(--btn-primary-fg);
+  }
+  .navbar-collapse .btn-nav-solid:hover,
+  .navbar-collapse .btn-nav-solid:focus {
+    background: var(--btn-primary-bg-hover);
+    color: #fff;
   }
   .navbar-collapse .theme-toggle {
     border-color: var(--border-soft);
     color: var(--text-muted-purple);
   }
-  .navbar-collapse .theme-toggle:hover {
+  .navbar-collapse .theme-toggle:hover,
+  .navbar-collapse .theme-toggle:focus {
     border-color: var(--purple-primary);
     color: var(--purple-primary);
     background: var(--purple-tint);
