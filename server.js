@@ -1,11 +1,10 @@
 /**
- * PasteBin - Simple pastebin application
+ * PasteBin - Simple pastebin application (wenyinos unified authentication)
  * Copyright (c) 2026 wenyinos. All rights reserved.
  */
 
 const express = require('express');
 const cors = require('cors');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const fs = require('fs');
@@ -13,8 +12,20 @@ const db = require('./db');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
 
+// 统一认证配置（WY_SSO_*；密钥走 .env，不入库；无 .env 时可用环境变量）
+try { process.loadEnvFile(path.join(__dirname, '.env')); } catch (e) { /* 无 .env 文件时忽略 */ }
+const SSO = {
+  enabled: (process.env.WY_SSO_ENABLED || 'true').toLowerCase() !== 'false',
+  apiUrl: process.env.WY_SSO_API_URL || '',
+  appId: process.env.WY_SSO_APP_ID || 'paste',
+  secret: process.env.WY_SSO_SECRET || '',
+  timeout: parseInt(process.env.WY_SSO_TIMEOUT || '3', 10),
+  loginUrl: process.env.WY_SSO_LOGIN_URL || '',
+  logoutUrl: process.env.WY_SSO_LOGOUT_URL || '',
+};
+
 const app = express();
-const PORT = 3331
+const PORT = parseInt(process.env.PORT || '3331', 10);
 
 // JWT Secret: 环境变量 > 持久化文件 > 自动生成并保存
 const JWT_SECRET_FILE = path.join(__dirname, '.jwt-secret');
@@ -27,46 +38,6 @@ if (!JWT_SECRET) {
     fs.writeFileSync(JWT_SECRET_FILE, JWT_SECRET);
     console.log('Generated new JWT_SECRET and saved to .jwt-secret');
   }
-}
-const captchaStore = new Map();
-
-function trimCaptchaStore(maxSize = 10000, targetSize = 9000) {
-  if (captchaStore.size <= maxSize) return;
-  while (captchaStore.size > targetSize) {
-    const oldestKey = captchaStore.keys().next().value;
-    if (!oldestKey) break;
-    captchaStore.delete(oldestKey);
-  }
-}
-
-function generateCaptcha() {
-  trimCaptchaStore();
-  const ops = ['+', '-', '×'];
-  const op = ops[Math.floor(Math.random() * ops.length)];
-  let a, b, answer;
-
-  switch (op) {
-    case '+':
-      a = Math.floor(Math.random() * 50) + 1;
-      b = Math.floor(Math.random() * 50) + 1;
-      answer = a + b;
-      break;
-    case '-':
-      a = Math.floor(Math.random() * 50) + 10;
-      b = Math.floor(Math.random() * a) + 1;
-      answer = a - b;
-      break;
-    case '×':
-      a = Math.floor(Math.random() * 12) + 2;
-      b = Math.floor(Math.random() * 12) + 2;
-      answer = a * b;
-      break;
-  }
-
-  const key = crypto.randomBytes(8).toString('hex');
-  captchaStore.set(key, { answer, attempts: 0 });
-  setTimeout(() => captchaStore.delete(key), 300000);
-  return { key, question: `${a} ${op} ${b} = ?` };
 }
 
 function generateShortCode() {
@@ -101,14 +72,13 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3331').
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json({ limit: '512kb' }));
 
-// 速率限制 - 认证接口防暴力破解
-const authLimiter = rateLimit({
+// 速率限制 - SSO 兑换接口防滥用
+const ssoLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 60,
   message: { error: '请求过于频繁，请稍后再试' }
 });
-app.use('/api/login', authLimiter);
-app.use('/api/register', authLimiter);
+app.use('/api/sso', ssoLimiter);
 
 // Block database access
 app.use((req, res, next) => {
@@ -118,67 +88,135 @@ app.use((req, res, next) => {
   next();
 });
 
+// ======================== 统一认证（wenyinos auth center） ========================
+
+// 调用中心 API；HMAC-SHA256 签名，格式与认证中心 /auth/api.php 验签一致
+// 返回解析后的响应对象；网络不可达/超时返回 null（降级语义）
+async function ssoApi(action, data) {
+  if (!SSO.apiUrl || !SSO.secret) return null;
+  const body = JSON.stringify({ action, data });
+  const timestamp = Math.floor(Date.now() / 1000);
+  const nonce = crypto.randomBytes(8).toString('hex');
+  const sign = crypto.createHmac('sha256', SSO.secret)
+    .update(`${SSO.appId}|${action}|${crypto.createHash('md5').update(body).digest('hex')}|${timestamp}|${nonce}`)
+    .digest('hex');
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), SSO.timeout * 1000);
+  try {
+    const res = await fetch(SSO.apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Wy-App': SSO.appId,
+        'X-Wy-Timestamp': String(timestamp),
+        'X-Wy-Nonce': nonce,
+        'X-Wy-Sign': sign,
+      },
+      body,
+      signal: controller.signal,
+    });
+    return await res.json();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// 读取请求 cookie（零依赖；wy_auth 为中心票据，HttpOnly 仅服务端可读）
+function getCookie(req, name) {
+  const header = req.headers.cookie || '';
+  for (const part of header.split(';')) {
+    const idx = part.indexOf('=');
+    if (idx === -1) continue;
+    if (part.slice(0, idx).trim() === name) return decodeURIComponent(part.slice(idx + 1).trim());
+  }
+  return '';
+}
+
+// 用户 upsert（中心权威）：按中心 uid 找到或存量用户按用户名绑定；不存在则建档
+function ssoUpsertUser(data) {
+  let user = db.prepare('SELECT * FROM users WHERE sso_uid = ?').get(data.uid);
+  if (!user) {
+    user = db.prepare('SELECT * FROM users WHERE username = ?').get(data.username);
+    if (user) db.prepare('UPDATE users SET sso_uid = ? WHERE id = ?').run(data.uid, user.id);
+  }
+  if (!user) {
+    const result = db.prepare('INSERT INTO users (username, password, sso_uid) VALUES (?, ?, ?)').run(data.username, '', data.uid);
+    user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
+  }
+  return user;
+}
+
+function signToken(user) {
+  return jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '24h' });
+}
+
+// 单点登出轻量校验（M-2）：写操作每 30 分钟校验一次中心票据有效性
+// 返回：0=有效；1xxx=业务拒绝（未开通等，需定向中心）；-1=票据失效（本地登出）；null=无票据/中心不可达（静默放行）
+const lastTicketCheck = new Map();
+async function checkTicket(req) {
+  const ticket = getCookie(req, 'wy_auth');
+  if (!ticket) return null;
+  const resp = await ssoApi('ticket', { ticket });
+  if (resp === null) return null;
+  const code = parseInt(resp.code, 10);
+  if (code === 0) return 0;
+  if (code > 0 && code < 2000) return code;
+  return -1;
+}
+
 // Auth middleware
-const authenticate = (req, res, next) => {
+const authenticate = async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
   try {
     req.userId = jwt.verify(token, JWT_SECRET).id;
-    next();
   } catch (err) {
-    res.status(401).json({ error: 'Invalid token' });
+    return res.status(401).json({ error: 'Invalid token' });
   }
+
+  if (SSO.enabled && ['POST', 'DELETE', 'PUT'].includes(req.method)) {
+    const now = Date.now();
+    if (now - (lastTicketCheck.get(req.userId) || 0) > 30 * 60 * 1000) {
+      lastTicketCheck.set(req.userId, now);
+      const t = await checkTicket(req);
+      if (t !== null && t !== 0) {
+        lastTicketCheck.delete(req.userId);
+        if (t > 0) return res.status(403).json({ error: '该账号未开通本站访问', loginUrl: SSO.loginUrl });
+        return res.status(401).json({ error: '登录已失效，请重新登录', relogin: true });
+      }
+    }
+  }
+  next();
 };
 
-// Routes
-app.get('/api/captcha', (req, res) => {
-  const captcha = generateCaptcha();
-  res.json({ key: captcha.key, question: captcha.question });
+// ======================== Routes ========================
+
+// 前端配置（登录/退出跳转地址；SSO 是否启用）
+app.get('/api/config', (req, res) => {
+  res.json({ ssoEnabled: SSO.enabled, loginUrl: SSO.loginUrl, logoutUrl: SSO.logoutUrl });
 });
 
-// Verify captcha
-const verifyCaptcha = (key, answer) => {
-  const entry = captchaStore.get(key);
-  if (!entry) return false;
+// 统一认证：票据兑换（服务端读 wy_auth cookie → 中心 ticket API → 签发本地 JWT）
+app.get('/api/sso', async (req, res) => {
+  if (!SSO.enabled || !SSO.apiUrl || !SSO.secret) return res.status(403).json({ error: '统一认证未启用' });
 
-  entry.attempts += 1;
-  const ok = parseInt(answer, 10) === entry.answer;
-  if (ok || entry.attempts >= 5) captchaStore.delete(key);
-  return ok;
-};
+  const ticket = getCookie(req, 'wy_auth');
+  if (!ticket) return res.status(401).json({ error: '无登录票据' });
 
-app.post('/api/register', async (req, res) => {
-  const { username, password, captchaKey, captchaAnswer } = req.body;
-  if (!username || !password) return res.status(400).json({ error: '用户名和密码不能为空' });
-  if (typeof username !== 'string' || username.trim().length < 3 || username.trim().length > 32) {
-    return res.status(400).json({ error: '用户名长度需在3-32个字符之间' });
-  }
-  if (typeof password !== 'string' || password.length < 8) {
-    return res.status(400).json({ error: '密码至少需要8个字符' });
-  }
-  if (!captchaKey || !captchaAnswer || !verifyCaptcha(captchaKey, captchaAnswer)) {
-    return res.status(400).json({ error: '验证码错误' });
-  }
-  try {
-    const hashed = await bcrypt.hash(password, 10);
-    const result = db.prepare('INSERT INTO users (username, password) VALUES (?, ?)').run(username.trim(), hashed);
-    res.json({ message: '注册成功', userId: result.lastInsertRowid });
-  } catch (err) {
-    // 统一错误消息，防止用户名枚举
-    res.status(400).json({ error: '注册失败，请稍后重试' });
-  }
-});
+  const resp = await ssoApi('ticket', { ticket });
+  if (resp === null) return res.status(503).json({ error: '认证中心不可达，请稍后重试' });
 
-app.post('/api/login', async (req, res) => {
-  const { username, password, captchaKey, captchaAnswer } = req.body;
-  if (!captchaKey || !captchaAnswer || !verifyCaptcha(captchaKey, captchaAnswer)) {
-    return res.status(400).json({ error: 'Invalid captcha' });
+  const code = parseInt(resp.code, 10);
+  if (code !== 0) {
+    if (code > 0 && code < 2000) return res.status(403).json({ error: '该账号未开通本站访问', loginUrl: SSO.loginUrl });
+    return res.status(401).json({ error: '票据无效或已过期' });
   }
-  const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
-  if (!user || !await bcrypt.compare(password, user.password)) {
-    return res.status(400).json({ error: 'Invalid credentials' });
-  }
-  res.json({ token: jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '24h' }), username: user.username });
+
+  const user = ssoUpsertUser(resp.data);
+  res.json({ token: signToken(user), username: user.username });
 });
 
 app.get('/api/pastes', authenticate, (req, res) => {

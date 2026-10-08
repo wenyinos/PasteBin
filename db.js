@@ -28,4 +28,11 @@ db.exec(`
   );
 `);
 
+// 统一认证映射列（sso_uid = 认证中心用户 uid；新库直接带上，旧库自动补列）
+const userColumns = db.prepare('PRAGMA table_info(users)').all().map(c => c.name);
+if (!userColumns.includes('sso_uid')) {
+  db.exec('ALTER TABLE users ADD COLUMN sso_uid INTEGER');
+  console.log('Added users.sso_uid column for unified authentication');
+}
+
 module.exports = db;

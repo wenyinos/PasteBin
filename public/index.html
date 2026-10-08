@@ -56,8 +56,7 @@
             <button id="logoutBtn" class="btn-nav-ghost">退出</button>
           </div>
           <div id="guestNav" class="align-items-center gap-2" style="display:none;">
-            <button class="btn-nav-ghost" onclick="showAuthModal('login')">登录</button>
-            <button class="btn-nav-solid" onclick="showAuthModal('register')">注册</button>
+            <button class="btn-nav-solid" onclick="goLogin()">登录</button>
           </div>
           <button id="themeToggle" class="theme-toggle" type="button" title="切换日间/夜间模式" aria-label="切换日间/夜间模式">
             <i class="bi bi-moon-stars"></i>
@@ -110,62 +109,6 @@
       </div>
     </section>
   </main>
-
-  <!-- 登录/注册模态框 -->
-  <div class="modal fade" id="authModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="authModalTitle">登录</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <div id="loginForm">
-            <form onsubmit="event.preventDefault(); doLogin();">
-            <div class="mb-3">
-              <label class="form-label">用户名</label>
-              <input type="text" class="form-control" id="loginUsername" autocomplete="username" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">密码</label>
-              <input type="password" class="form-control" id="loginPassword" autocomplete="current-password" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">验证码</label>
-              <div class="input-group">
-                <input type="text" class="form-control" id="loginCaptcha" placeholder="请输入答案" required>
-                <button class="btn-brand-outline" type="button" onclick="refreshCaptcha()">刷新</button>
-              </div>
-              <div id="loginCaptchaQuestion" class="text-soft font-small mt-1"></div>
-            </div>
-            <button type="submit" class="btn-brand w-100">登录</button>
-            </form>
-          </div>
-          <div id="registerForm" style="display:none;">
-            <form onsubmit="event.preventDefault(); doRegister();">
-            <div class="mb-3">
-              <label class="form-label">用户名</label>
-              <input type="text" class="form-control" id="registerUsername" autocomplete="username" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">密码</label>
-              <input type="password" class="form-control" id="registerPassword" autocomplete="new-password" required>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">验证码</label>
-              <div class="input-group">
-                <input type="text" class="form-control" id="registerCaptcha" placeholder="请输入答案" required>
-                <button class="btn-brand-outline" type="button" onclick="refreshCaptcha()">刷新</button>
-              </div>
-              <div id="registerCaptchaQuestion" class="text-soft font-small mt-1"></div>
-            </div>
-            <button type="submit" class="btn-brand w-100">注册</button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- 新建Paste模态框 -->
   <div class="modal fade" id="createModal" tabindex="-1">
@@ -264,8 +207,8 @@
   <script>
     const API_URL = '/api';
     let token = localStorage.getItem('token');
-    let authModal, createModal;
-    let captchaKey = '';
+    let createModal;
+    let ssoConfig = { loginUrl: '', logoutUrl: '' };
 
     const langLabels = {
       plaintext: '纯文本', javascript: 'JavaScript', typescript: 'TypeScript',
@@ -303,9 +246,15 @@
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
-      authModal = new bootstrap.Modal(document.getElementById('authModal'));
       createModal = new bootstrap.Modal(document.getElementById('createModal'));
-      updateNav();
+      await loadConfig();
+      if (token) {
+        updateNav();
+      } else {
+        // 未持有本地令牌时静默尝试统一认证兑换（浏览器携带中心票据即可自动登录）
+        const ssoOk = await trySilentSSO();
+        if (!ssoOk) updateNav();
+      }
 
       const shortCode = getQueryParam('s');
       if (shortCode) {
@@ -437,11 +386,19 @@
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` }
         });
-        if (res.ok) loadAllPastes();
-        else {
-          const data = await res.json();
-          alert(data.error || '删除失败');
+        if (res.ok) { loadAllPastes(); return; }
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 403) {
+          // 站点准入被撤销：定向回认证中心
+          const target = data.loginUrl || ssoConfig.loginUrl;
+          if (target) { window.location.href = target; return; }
         }
+        if (res.status === 401) {
+          token = null;
+          localStorage.removeItem('token');
+          updateNav();
+        }
+        alert(data.error || '删除失败');
       } catch (e) {
         alert('删除失败: ' + e.message);
       }
@@ -476,69 +433,40 @@
       }
     }
 
-    function showAuthModal(type) {
-      document.getElementById('authModalTitle').textContent = type === 'login' ? '登录' : '注册';
-      document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none';
-      document.getElementById('registerForm').style.display = type === 'register' ? 'block' : 'none';
-      refreshCaptcha();
-      authModal.show();
-    }
-
-    async function refreshCaptcha() {
-      try {
-        const res = await fetch(`${API_URL}/captcha`);
-        const data = await res.json();
-        captchaKey = data.key;
-        document.getElementById('loginCaptchaQuestion').textContent = data.question;
-        document.getElementById('registerCaptchaQuestion').textContent = data.question;
-        document.getElementById('loginCaptcha').value = '';
-        document.getElementById('registerCaptcha').value = '';
-      } catch (e) {
-        console.error('Failed to load captcha:', e);
+    function goLogin() {
+      if (ssoConfig.loginUrl) {
+        window.location.href = ssoConfig.loginUrl;
+      } else {
+        alert('统一认证未启用，请联系社区管理员');
       }
     }
 
-    async function doLogin() {
-      const res = await fetch(`${API_URL}/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: document.getElementById('loginUsername').value,
-          password: document.getElementById('loginPassword').value,
-          captchaKey: captchaKey,
-          captchaAnswer: document.getElementById('loginCaptcha').value
-        })
-      });
-      const data = await res.json();
-      if (res.ok) {
+    async function loadConfig() {
+      try {
+        const res = await fetch(`${API_URL}/config`);
+        if (res.ok) ssoConfig = await res.json();
+      } catch { /* 配置不可达时保留默认（空） */ }
+    }
+
+    async function trySilentSSO() {
+      try {
+        const res = await fetch(`${API_URL}/sso`);
+        if (res.status === 403) {
+          // 账号未开通本站：定向回认证中心（已登录时自动进入面板查看提示）
+          const data = await res.json().catch(() => ({}));
+          const target = data.loginUrl || ssoConfig.loginUrl;
+          if (target) { window.location.href = target; return true; }
+          return false;
+        }
+        if (!res.ok) return false;
+        const data = await res.json();
+        if (!data.token) return false;
         token = data.token;
         localStorage.setItem('token', token);
-        authModal.hide();
         updateNav();
-        loadAllPastes();
-      } else {
-        alert(data.error);
-        refreshCaptcha();
-      }
-    }
-
-    async function doRegister() {
-      const res = await fetch(`${API_URL}/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: document.getElementById('registerUsername').value,
-          password: document.getElementById('registerPassword').value,
-          captchaKey: captchaKey,
-          captchaAnswer: document.getElementById('registerCaptcha').value
-        })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert('注册成功，请登录');
-        showAuthModal('login');
-      } else {
-        alert(data.error);
+        return true;
+      } catch {
+        return false;
       }
     }
 
@@ -558,14 +486,19 @@
         body: JSON.stringify({ content, language })
       });
       if (!res.ok) {
-        let msg = `创建失败 (${res.status})`;
-        try { const data = await res.json(); if (data && data.error) msg = data.error; } catch {}
-        alert(msg);
+        let data = {};
+        try { data = await res.json(); } catch {}
+        if (res.status === 403) {
+          // 站点准入被撤销：定向回认证中心
+          const target = data.loginUrl || ssoConfig.loginUrl;
+          if (target) { window.location.href = target; return; }
+        }
         if (res.status === 401) {
           token = null;
           localStorage.removeItem('token');
           updateNav();
         }
+        alert(data.error || `创建失败 (${res.status})`);
         return;
       }
       const data = await res.json();
@@ -576,8 +509,8 @@
     document.getElementById('logoutBtn').onclick = () => {
       token = null;
       localStorage.removeItem('token');
-      updateNav();
-      loadAllPastes();
+      // 全域登出：跳转认证中心退出页（销毁中心票据后回登录页）
+      window.location.href = ssoConfig.logoutUrl || '/';
     };
   </script>
 </body>
