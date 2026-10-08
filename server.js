@@ -25,6 +25,8 @@ const SSO = {
 };
 
 const app = express();
+// 经 nginx 反向代理部署：信任本机回环代理，按 X-Forwarded-For 识别真实客户端 IP（限速依赖）
+app.set('trust proxy', 'loopback');
 const PORT = parseInt(process.env.PORT || '3331', 10);
 
 // JWT Secret: 环境变量 > 持久化文件 > 自动生成并保存
