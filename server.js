@@ -33,6 +33,8 @@ const SSO = {
 };
 
 const app = express();
+// 不暴露后端技术栈
+app.disable('x-powered-by');
 // 经 nginx 反向代理部署：信任本机回环代理，按 X-Forwarded-For 识别真实客户端 IP（限速依赖）
 app.set('trust proxy', 'loopback');
 const PORT = parseInt(process.env.PORT || '3331', 10);
@@ -93,6 +95,9 @@ app.use((req, res, next) => {
   res.setHeader('X-XSS-Protection', '0');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  // HSTS 由应用下发而非反向代理：反代配置可能被面板重新生成而丢失此头。
+  // 明文响应中的 HSTS 按 RFC 6797 会被浏览器忽略，因此无需按环境判断。
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000');
   res.setHeader('Content-Security-Policy',
     "default-src 'self'; " +
     "script-src 'self' 'unsafe-inline'; " +
