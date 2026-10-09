@@ -151,8 +151,10 @@ function ssoUpsertUser(data) {
   return user;
 }
 
-function signToken(user) {
-  return jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '24h' });
+function signToken(user, ticket) {
+  const payload = { id: user.id, username: user.username };
+  if (ticket) payload.tk = crypto.createHash('md5').update(ticket).digest('hex');   // 票据指纹（供登录态一致性比对）
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: '24h' });
 }
 
 // 单点登出轻量校验（M-2）：写操作每 30 分钟校验一次中心票据有效性
@@ -169,14 +171,47 @@ async function checkTicket(req) {
   return -1;
 }
 
+// 登录态一致性校准（账号切换 / 中心退出即时生效）：
+// 比对本请求 wy_auth 指纹与 JWT 内票据指纹；不一致时重兑切换 / 本地登出 / 降级保持。
+// 返回 action：ok=一致（零网络开销）；switched=已切换身份；unauth=本地登出；denied=准入被撤销；keep=中心不可达（降级）
+async function reconcileSession(req, payload) {
+  const cur = getCookie(req, 'wy_auth');
+  const curHash = cur ? crypto.createHash('md5').update(cur).digest('hex') : '';
+  const recHash = payload && payload.tk ? payload.tk : '';
+  if (curHash === recHash) return { action: 'ok' };
+
+  if (!cur) return { action: 'unauth' };   // 中心票据已清除（中心已退出）
+
+  const resp = await ssoApi('ticket', { ticket: cur });
+  if (resp === null) return { action: 'keep' };   // 中心不可达 → 保持现状（降级）
+
+  const code = parseInt(resp.code, 10);
+  if (code === 0) return { action: 'switched', user: ssoUpsertUser(resp.data), ticket: cur };
+  if (code > 0 && code < 2000) return { action: 'denied' };
+  return { action: 'unauth' };   // 票据无效/过期（2xxx）/协议异常（3xxx）
+}
+
 // Auth middleware
 const authenticate = async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  let payload;
   try {
-    req.userId = jwt.verify(token, JWT_SECRET).id;
+    payload = jwt.verify(token, JWT_SECRET);
   } catch (err) {
     return res.status(401).json({ error: 'Invalid token' });
+  }
+  req.userId = payload.id;
+
+  // 账号切换 / 中心退出的一致性校准（每个请求比对；票据一致时零网络开销）
+  if (SSO.enabled) {
+    const r = await reconcileSession(req, payload);
+    if (r.action === 'unauth') return res.status(401).json({ error: '登录已失效，请重新登录', relogin: true });
+    if (r.action === 'denied') return res.status(403).json({ error: '该账号未开通本站访问', loginUrl: SSO.loginUrl });
+    if (r.action === 'switched') {
+      req.userId = r.user.id;
+      res.setHeader('X-New-Token', signToken(r.user, r.ticket));   // 前端静默续签（含切换后的用户名）
+    }
   }
 
   if (SSO.enabled && ['POST', 'DELETE', 'PUT'].includes(req.method)) {
@@ -218,7 +253,7 @@ app.get('/api/sso', async (req, res) => {
   }
 
   const user = ssoUpsertUser(resp.data);
-  res.json({ token: signToken(user), username: user.username });
+  res.json({ token: signToken(user, ticket), username: user.username });
 });
 
 app.get('/api/pastes', authenticate, (req, res) => {

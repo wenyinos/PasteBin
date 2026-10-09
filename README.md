@@ -25,6 +25,8 @@ Login / registration / logout are all handled by the [wenyinos auth center](http
 
 The browser carries the center's HttpOnly `wy_auth` ticket cookie; the backend exchanges it via `GET /api/sso` for a local JWT. Accounts **without access to this site are redirected back to the auth center** (where the panel shows the reason); when the center is unreachable, only public browsing works (no local fallback).
 
+**Account switch / center sign-out take effect immediately**: the local JWT carries a ticket fingerprint that is compared against the current center ticket on every request — switching accounts switches the identity automatically; after a center sign-out the site logs out locally (falls back to guest browsing).
+
 ## Quick Start
 
 ```bash

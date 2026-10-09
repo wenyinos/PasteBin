@@ -248,13 +248,10 @@
     document.addEventListener('DOMContentLoaded', async () => {
       createModal = new bootstrap.Modal(document.getElementById('createModal'));
       await loadConfig();
-      if (token) {
-        updateNav();
-      } else {
-        // 未持有本地令牌时静默尝试统一认证兑换（浏览器携带中心票据即可自动登录）
-        const ssoOk = await trySilentSSO();
-        if (!ssoOk) updateNav();
-      }
+      // 总是尝试统一认证兑换：浏览器携带中心票据即自动登录；票据已更换则自动切换账号；
+      // 无票据（中心已退出）时清理本地遗留令牌，回落游客态
+      const ssoOk = await trySilentSSO();
+      if (!ssoOk) updateNav();
 
       const shortCode = getQueryParam('s');
       if (shortCode) {
@@ -382,10 +379,7 @@
     async function deletePaste(id) {
       if (!confirm('确定要删除这条代码吗？')) return;
       try {
-        const res = await fetch(`${API_URL}/pastes/${id}`, {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const res = await authFetch(`${API_URL}/pastes/${id}`, { method: 'DELETE' });
         if (res.ok) { loadAllPastes(); return; }
         const data = await res.json().catch(() => ({}));
         if (res.status === 403) {
@@ -458,6 +452,11 @@
           if (target) { window.location.href = target; return true; }
           return false;
         }
+        if (res.status === 401) {
+          // 无中心票据 / 票据失效：清理本地遗留令牌，回落游客态
+          if (token) { token = null; localStorage.removeItem('token'); }
+          return false;
+        }
         if (!res.ok) return false;
         const data = await res.json();
         if (!data.token) return false;
@@ -470,6 +469,19 @@
       }
     }
 
+    // 带认证的请求封装：自动附带令牌；服务端校准切换账号时经 X-New-Token 静默续签
+    async function authFetch(url, options = {}) {
+      options.headers = Object.assign({}, options.headers, { Authorization: `Bearer ${token}` });
+      const res = await fetch(url, options);
+      const newToken = res.headers.get('X-New-Token');
+      if (newToken) {
+        token = newToken;
+        localStorage.setItem('token', token);
+        updateNav();
+      }
+      return res;
+    }
+
     function showCreateModal() {
       document.getElementById('pasteContent').value = '';
       document.getElementById('pasteLanguage').value = 'plaintext';
@@ -480,9 +492,9 @@
       const content = document.getElementById('pasteContent').value;
       const language = document.getElementById('pasteLanguage').value;
       if (!content.trim()) return alert('内容不能为空');
-      const res = await fetch(`${API_URL}/pastes`, {
+      const res = await authFetch(`${API_URL}/pastes`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content, language })
       });
       if (!res.ok) {
