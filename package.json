@@ -1,17 +1,17 @@
 {
   "name": "pastebin",
-  "version": "1.0.0",
-  "description": "Simple pastebin with register/login",
+  "version": "1.9.0",
+  "description": "Code snippet sharing with unified SSO authentication",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test"
   },
   "dependencies": {
     "better-sqlite3": "^12.8.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "express-rate-limit": "^8.5.0",
-    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "prismjs": "^1.30.0"
   },
