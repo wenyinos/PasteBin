@@ -17,7 +17,7 @@
   <link href="/css/prism-tomorrow.min.css" rel="stylesheet">
   <link href="/css/theme.css" rel="stylesheet">
   <script>
-    /* 尽早设置主题，避免页面闪烁 */
+/* 尽早设置主题，避免页面闪烁 */
     (function () {
       var t = localStorage.getItem('theme');
       if (!t) {
@@ -53,6 +53,8 @@
         <div class="d-flex align-items-center justify-content-center justify-content-lg-end gap-2">
           <div id="userNav" class="align-items-center gap-2" style="display:none;">
             <span id="usernameDisplay" class="nav-text font-small"></span>
+            <button id="adminBtn" class="btn-nav-ghost" style="display:none;">管理</button>
+            <button id="tokenBtn" class="btn-nav-ghost">API Token</button>
             <button id="logoutBtn" class="btn-nav-ghost">退出</button>
           </div>
           <div id="guestNav" class="align-items-center gap-2" style="display:none;">
@@ -72,22 +74,46 @@
     <section class="section" id="publicView" style="display:none;">
       <div class="container">
         <div class="paste-card">
-          <div class="paste-card-head d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-person-circle me-2"></i>来自: <strong id="pasteAuthor"></strong></span>
-            <div>
-              <span id="displayPasteLanguage" class="badge-soft me-2"></span>
-              <small class="text-soft font-small" id="pasteTime"><i class="bi bi-clock me-1"></i></small>
+          <div class="paste-card-head">
+            <div class="d-flex justify-content-between align-items-center">
+              <span><i class="bi bi-person-circle me-2"></i>来自: <strong id="pasteAuthor"></strong></span>
+              <div>
+                <span id="displayPasteLanguage" class="badge-soft me-2"></span>
+                <small class="text-soft font-small" id="pasteTime"><i class="bi bi-clock me-1"></i></small>
+              </div>
             </div>
+            <h5 class="paste-title-display" id="displayPasteTitle" style="display:none;"></h5>
+            <div class="paste-expiry" id="displayPasteExpiry" style="display:none;"></div>
           </div>
           <div class="paste-card-body">
+            <div id="burnNotice" class="highlight-hint" style="display:none; cursor:default;"></div>
+            <div id="highlightHint" class="highlight-hint" style="display:none;"></div>
             <pre><code id="publicContent" class="language-plaintext"></code></pre>
           </div>
           <div class="paste-card-foot">
             <a id="shareLink" href="#" class="btn-brand-outline">
               <i class="bi bi-link-45deg me-1"></i>分享链接
             </a>
-            <button class="btn-brand ms-2" onclick="copyAllCode(this)">
+            <button class="btn-brand ms-2" id="copyCodeBtn">
               <i class="bi bi-clipboard me-1"></i>全部复制
+            </button>
+            <a id="rawLink" href="#" target="_blank" rel="noopener" class="btn-brand-outline ms-2" title="纯文本视图（可用 curl 获取）">
+              <i class="bi bi-file-earmark-code me-1"></i>原始
+            </a>
+            <a id="dlLink" href="#" class="btn-brand-outline ms-2" title="下载文件">
+              <i class="bi bi-download me-1"></i>下载
+            </a>
+            <button class="btn-brand-outline ms-2" id="qrBtn" title="二维码（q）">
+              <i class="bi bi-qr-code me-1"></i>二维码
+            </button>
+            <button class="btn-brand-outline ms-2" id="mdBtn" style="display:none;" title="切换渲染视图（m）">
+              <i class="bi bi-markdown me-1"></i>渲染
+            </button>
+            <button class="btn-brand-outline ms-2" id="helpBtn" title="快捷键（?）">
+              <i class="bi bi-keyboard"></i>
+            </button>
+            <button class="btn-brand-outline ms-2" id="reportBtn" title="举报此内容">
+              <i class="bi bi-flag"></i>
             </button>
           </div>
         </div>
@@ -98,13 +124,23 @@
     <section id="mainSection">
       <div class="section">
         <div class="container">
-          <div class="d-flex align-items-center mb-4">
-            <h4 class="section-title mb-0 h3">最新分享</h4>
-            <button class="btn-brand-outline ms-3" onclick="loadAllPastes()">
+          <div class="d-flex align-items-center mb-4 flex-wrap gap-2">
+            <h4 class="section-title mb-0 h3">分享</h4>
+            <div class="view-tabs" id="viewTabs">
+              <button type="button" class="view-tab active" data-view="all">最新</button>
+              <button type="button" class="view-tab" data-view="mine">我的</button>
+            </div>
+            <div class="list-filter ms-auto">
+              <input type="search" id="listFilter" class="form-control form-control-sm" placeholder="搜索标题 / 用户…" autocomplete="off">
+            </div>
+            <button class="btn-brand-outline" id="refreshBtn">
               <i class="bi bi-arrow-clockwise me-1"></i>刷新
             </button>
           </div>
           <div id="pastesList" data-v="20260410a"></div>
+          <div class="text-center mt-3">
+            <button class="btn-brand-outline" id="loadMoreBtn" style="display:none;">加载更多</button>
+          </div>
         </div>
       </div>
     </section>
@@ -120,7 +156,11 @@
         </div>
         <div class="modal-body">
           <div class="mb-3">
-            <label class="form-label">语言</label>
+            <label class="form-label" for="pasteTitle">标题</label>
+            <input type="text" class="form-control" id="pasteTitle" maxlength="120" placeholder="可选，便于在列表中辨认">
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="pasteLanguage">语言</label>
             <select class="form-select" id="pasteLanguage">
               <option value="plaintext">纯文本</option>
               <option value="javascript">JavaScript</option>
@@ -150,11 +190,166 @@
             </select>
           </div>
           <textarea class="form-control mb-3" id="pasteContent" rows="10" placeholder="输入内容..."></textarea>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label d-block">可见性</label>
+              <div class="pill-group" id="visibilityGroup">
+                <label class="pill-option">
+                  <input type="radio" name="visibility" value="public" checked>
+                  <span>公开</span>
+                </label>
+                <label class="pill-option">
+                  <input type="radio" name="visibility" value="unlisted">
+                  <span>仅链接可见</span>
+                </label>
+                <label class="pill-option">
+                  <input type="radio" name="visibility" value="private">
+                  <span>仅自己</span>
+                </label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label d-block">有效期</label>
+              <div class="pill-group" id="expiryGroup"></div>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label d-block">选项</label>
+              <div class="pill-group">
+                <label class="pill-option">
+                  <input type="checkbox" id="burnToggle">
+                  <span>阅后即焚</span>
+                </label>
+                <label class="pill-option">
+                  <input type="checkbox" id="encryptToggle">
+                  <span>密码加密</span>
+                </label>
+              </div>
+            </div>
+            <div class="col-md-6" id="encryptPasswordWrap" style="display:none;">
+              <label class="form-label" for="encryptPassword">加密密码</label>
+              <input type="password" class="form-control" id="encryptPassword" autocomplete="new-password"
+                     placeholder="密码丢失则内容不可恢复">
+            </div>
+          </div>
+
+          <p class="text-soft font-small mb-3" id="encryptNotice" style="display:none;">
+            <i class="bi bi-shield-lock me-1"></i>内容在你的浏览器中加密后才上传，服务器无法读取。分享链接会附带解密密钥（<code>#</code> 之后的部分），请勿提交到公开渠道。
+          </p>
+
           <button class="btn-brand" onclick="doCreatePaste()">
             <i class="bi bi-check-lg me-1"></i>保存
           </button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- API Token 管理 -->
+  <div class="modal fade" id="tokenModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-key me-2"></i>API Token</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-soft font-small">
+            用于命令行或脚本调用本站 API。Token 只在创建时显示一次，且<b>不随统一认证登出而失效</b>——
+            如怀疑泄漏请立即撤销。
+          </p>
+
+          <div class="token-create-row">
+            <input type="text" class="form-control" id="tokenName" maxlength="60" placeholder="名称，如：我的笔记本 CLI">
+            <button class="btn-brand" id="tokenCreateBtn">创建</button>
+          </div>
+
+          <div id="tokenNewWrap" class="token-new" style="display:none;">
+            <div class="text-soft font-small mb-1">请立即复制保存，此明文只显示这一次：</div>
+            <code id="tokenNewValue" class="token-new-value"></code>
+            <button class="btn-brand-outline mt-2" id="tokenCopyBtn"><i class="bi bi-clipboard me-1"></i>复制 Token</button>
+          </div>
+
+          <div id="tokenList" class="token-list mt-3"></div>
+
+          <details class="mt-3">
+            <summary class="text-soft font-small">命令行用法</summary>
+            <pre class="token-usage"><code># 创建 paste，返回 short_code
+curl -s -X POST https://&lt;站点&gt;/api/pastes \
+  -H "Authorization: Bearer paste_你的Token" \
+  -H 'Content-Type: application/json' \
+  -d '{"content":"hello","language":"bash"}' | jq -r .short_code
+
+# 读取原始内容
+curl https://&lt;站点&gt;/raw/&lt;short_code&gt;</code></pre>
+          </details>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 二维码 -->
+  <div class="modal fade" id="qrModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-qr-code me-2"></i>二维码</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body text-center">
+          <div id="qrCanvas"></div>
+          <p class="text-soft font-small mt-3 mb-0" id="qrCaption"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 举报 -->
+  <div class="modal fade" id="reportModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-flag me-2"></i>举报内容</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-soft font-small">举报将提交给管理员处理，请简述问题所在。</p>
+          <textarea class="form-control mb-3" id="reportReason" rows="3" maxlength="500"
+                    placeholder="例如：包含敏感凭据 / 与主题无关的广告 / 侵权内容"></textarea>
+          <button class="btn-brand" id="reportSubmitBtn">提交举报</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 管理面板 -->
+  <div class="modal fade" id="adminModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-shield-check me-2"></i>管理面板</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="view-tabs mb-3" id="adminTabs">
+            <button type="button" class="view-tab active" data-pane="stats">概览</button>
+            <button type="button" class="view-tab" data-pane="reports">举报</button>
+            <button type="button" class="view-tab" data-pane="pastes">全部内容</button>
+          </div>
+          <div id="adminPane"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通用提示层：阅后即焚确认 / 解密密码输入 -->
+  <div class="prompt-overlay" id="promptOverlay" style="display:none;">
+    <div class="prompt-card">
+      <div id="promptBody"></div>
+      <div class="prompt-actions" id="promptActions"></div>
     </div>
   </div>
 
@@ -176,354 +371,37 @@
     </div>
   </footer>
 
-  <script src="/js/bootstrap.bundle.min.js"></script>
-  <script src="/js/prism.js"></script>
-  <script src="/js/components/prism-markup.min.js"></script>
-  <script src="/js/components/prism-css.min.js"></script>
-  <script src="/js/components/prism-clike.min.js"></script>
-  <script src="/js/components/prism-javascript.min.js"></script>
-  <script src="/js/components/prism-typescript.min.js"></script>
-  <script src="/js/components/prism-python.min.js"></script>
-  <script src="/js/components/prism-java.min.js"></script>
-  <script src="/js/components/prism-c.min.js"></script>
-  <script src="/js/components/prism-cpp.min.js"></script>
-  <script src="/js/components/prism-csharp.min.js"></script>
-  <script src="/js/components/prism-go.min.js"></script>
-  <script src="/js/components/prism-rust.min.js"></script>
-  <script src="/js/components/prism-markup-templating.min.js"></script>
-  <script src="/js/components/prism-php.min.js"></script>
-  <script src="/js/components/prism-ruby.min.js"></script>
-  <script src="/js/components/prism-swift.min.js"></script>
-  <script src="/js/components/prism-kotlin.min.js"></script>
-  <script src="/js/components/prism-scss.min.js"></script>
-  <script src="/js/components/prism-json.min.js"></script>
-  <script src="/js/components/prism-yaml.min.js"></script>
-  <script src="/js/components/prism-markdown.min.js"></script>
-  <script src="/js/components/prism-sql.min.js"></script>
-  <script src="/js/components/prism-bash.min.js"></script>
-  <script src="/js/components/prism-powershell.min.js"></script>
-  <script src="/js/components/prism-docker.min.js"></script>
-  <script src="/js/theme.js"></script>
-  <script>
-    const API_URL = '/api';
-    let token = localStorage.getItem('token');
-    let createModal;
-    let ssoConfig = { loginUrl: '', logoutUrl: '' };
-
-    const langLabels = {
-      plaintext: '纯文本', javascript: 'JavaScript', typescript: 'TypeScript',
-      python: 'Python', java: 'Java', csharp: 'C#', cpp: 'C++', c: 'C',
-      go: 'Go', rust: 'Rust', php: 'PHP', ruby: 'Ruby', swift: 'Swift',
-      kotlin: 'Kotlin', html: 'HTML', css: 'CSS', scss: 'SCSS',
-      json: 'JSON', xml: 'XML', yaml: 'YAML', markdown: 'Markdown',
-      sql: 'SQL', bash: 'Bash', powershell: 'PowerShell', dockerfile: 'Dockerfile'
-    };
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text ?? '';
-      return div.innerHTML;
-    }
-
-    function decodeJwtPayload(jwtToken) {
-      try {
-        if (!jwtToken) return null;
-        const parts = jwtToken.split('.');
-        if (parts.length < 2) return null;
-        let payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-        while (payload.length % 4 !== 0) payload += '=';
-        return JSON.parse(atob(payload));
-      } catch {
-        return null;
-      }
-    }
-
-    function getCurrentUser() {
-      const payload = decodeJwtPayload(token);
-      if (!payload || typeof payload !== 'object') return null;
-      if (!payload.username) return null;
-      return payload;
-    }
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      createModal = new bootstrap.Modal(document.getElementById('createModal'));
-      await loadConfig();
-      // 总是尝试统一认证兑换：浏览器携带中心票据即自动登录；票据已更换则自动切换账号；
-      // 无票据（中心已退出）时清理本地遗留令牌，回落游客态
-      const ssoOk = await trySilentSSO();
-      if (!ssoOk) updateNav();
-
-      const shortCode = getQueryParam('s');
-      if (shortCode) {
-        const loaded = await loadPublicPaste();
-        if (!loaded) await loadAllPastes();
-      } else {
-        await loadAllPastes();
-      }
-    });
-
-    function getQueryParam(name) {
-      return new URLSearchParams(window.location.search).get(name);
-    }
-
-    async function loadPublicPaste() {
-      const shortCode = getQueryParam('s');
-      if (!shortCode) return false;
-
-      try {
-        const res = await fetch('/api/paste/' + shortCode);
-        if (!res.ok) return false;
-
-        const paste = await res.json();
-
-        document.getElementById('pasteAuthor').textContent = paste.username;
-        document.getElementById('pasteTime').textContent = new Date(paste.created_at).toLocaleString();
-        document.getElementById('displayPasteLanguage').textContent = langLabels[paste.language] || paste.language;
-
-        const codeEl = document.getElementById('publicContent');
-        codeEl.className = '';
-        codeEl.classList.add('language-' + (paste.language || 'plaintext'));
-        codeEl.textContent = paste.content;
-
-        try { Prism.highlightElement(codeEl); } catch (e) { console.warn('Prism highlight failed:', e); }
-
-        const fullUrl = window.location.origin + window.location.pathname + '?s=' + paste.short_code;
-        document.getElementById('shareLink').href = fullUrl;
-        document.getElementById('shareLink').innerHTML = '<i class="bi bi-link-45deg me-1"></i>分享链接: ' + fullUrl;
-
-        document.getElementById('mainSection').style.display = 'none';
-        document.getElementById('publicView').style.display = 'block';
-
-        return true;
-      } catch (e) {
-        return false;
-      }
-    }
-
-    function updateNav() {
-      try {
-        if (token) {
-          const user = getCurrentUser();
-          if (!user) throw new Error('Invalid token payload');
-          document.getElementById('usernameDisplay').textContent = user.username;
-          document.getElementById('userNav').style.display = 'flex';
-          document.getElementById('guestNav').style.display = 'none';
-          document.getElementById('newPasteBtn').style.display = 'inline-flex';
-        } else {
-          document.getElementById('userNav').style.display = 'none';
-          document.getElementById('guestNav').style.display = 'flex';
-          document.getElementById('newPasteBtn').style.display = 'none';
-        }
-      } catch (e) {
-        console.error('updateNav error:', e);
-        token = null;
-        localStorage.removeItem('token');
-        document.getElementById('userNav').style.display = 'none';
-        document.getElementById('guestNav').style.display = 'flex';
-        document.getElementById('newPasteBtn').style.display = 'none';
-      }
-    }
-
-    async function loadAllPastes() {
-      try {
-        const res = await fetch('/api/pastes/all');
-        if (!res.ok) throw new Error('API error: ' + res.status);
-        const pastes = await res.json();
-
-        document.getElementById('mainSection').style.display = 'block';
-        document.getElementById('publicView').style.display = 'none';
-
-        const list = document.getElementById('pastesList');
-        if (!pastes.length) {
-          list.innerHTML = '<p class="text-soft text-center font-small">暂无内容</p>';
-          return;
-        }
-        const currentUser = getCurrentUser();
-        list.innerHTML = pastes.map(p => {
-          const isOwner = !!(currentUser && currentUser.username === p.username);
-          const safeUsername = escapeHtml(p.username);
-          const safeLanguage = escapeHtml(langLabels[p.language] || p.language);
-          return `
-          <div class="paste-card mb-3">
-            <div class="paste-card-body">
-              <div class="paste-meta-row d-flex justify-content-between align-items-start mb-2">
-                <div class="paste-meta">
-                  <span class="badge-soft"><i class="bi bi-code-square me-1"></i>${safeLanguage}</span>
-                  <span class="text-soft font-small ms-2"><i class="bi bi-person me-1"></i>${safeUsername}</span>
-                  <small class="text-soft font-small ms-2"><i class="bi bi-clock me-1"></i>${new Date(p.created_at).toLocaleString()}</small>
-                </div>
-                <div class="paste-actions">
-                  <a href="?s=${p.short_code}" class="btn-brand-outline">
-                    <i class="bi bi-eye me-1"></i>访问
-                  </a>
-                  ${isOwner ? `<button class="btn btn-sm btn-outline-danger ms-1" onclick="deletePaste(${p.id})"><i class="bi bi-trash me-1"></i>删除</button>` : ''}
-                </div>
-              </div>
-              <div class="paste-summary">${escapeHtml(p.content)}</div>
-            </div>
-          </div>
-        `}).join('');
-      } catch (e) {
-        console.error(e);
-        document.getElementById('mainSection').style.display = 'block';
-        document.getElementById('publicView').style.display = 'none';
-        const errorMsg = e.message || e.toString() || 'Unknown error';
-        const errP = document.createElement('p');
-        errP.className = 'text-soft text-center font-small';
-        errP.textContent = '加载失败: ' + errorMsg;
-        document.getElementById('pastesList').textContent = '';
-        document.getElementById('pastesList').appendChild(errP);
-      }
-    }
-
-    async function deletePaste(id) {
-      if (!confirm('确定要删除这条代码吗？')) return;
-      try {
-        const res = await authFetch(`${API_URL}/pastes/${id}`, { method: 'DELETE' });
-        if (res.ok) { loadAllPastes(); return; }
-        const data = await res.json().catch(() => ({}));
-        if (res.status === 403) {
-          // 站点准入被撤销：定向回认证中心
-          const target = data.loginUrl || ssoConfig.loginUrl;
-          if (target) { window.location.href = target; return; }
-        }
-        if (res.status === 401) {
-          token = null;
-          localStorage.removeItem('token');
-          updateNav();
-        }
-        alert(data.error || '删除失败');
-      } catch (e) {
-        alert('删除失败: ' + e.message);
-      }
-    }
-
-    function copyAllCode(btn) {
-      const code = document.getElementById('publicContent').textContent;
-      const originalHtml = btn.innerHTML;
-
-      function onSuccess() {
-        btn.innerHTML = '<i class="bi bi-check me-1"></i>已复制';
-        btn.disabled = true;
-        setTimeout(() => { btn.innerHTML = originalHtml; btn.disabled = false; }, 2000);
-      }
-
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(code).then(onSuccess).catch(() => fallbackCopy());
-      } else {
-        fallbackCopy();
-      }
-
-      function fallbackCopy() {
-        const textarea = document.createElement('textarea');
-        textarea.value = code;
-        textarea.style.position = 'fixed';
-        textarea.style.opacity = '0';
-        document.body.appendChild(textarea);
-        textarea.select();
-        try { document.execCommand('copy'); onSuccess(); }
-        catch { alert('复制失败，请手动选择复制'); }
-        document.body.removeChild(textarea);
-      }
-    }
-
-    function goLogin() {
-      if (ssoConfig.loginUrl) {
-        window.location.href = ssoConfig.loginUrl;
-      } else {
-        alert('统一认证未启用，请联系社区管理员');
-      }
-    }
-
-    async function loadConfig() {
-      try {
-        const res = await fetch(`${API_URL}/config`);
-        if (res.ok) ssoConfig = await res.json();
-      } catch { /* 配置不可达时保留默认（空） */ }
-    }
-
-    async function trySilentSSO() {
-      try {
-        const res = await fetch(`${API_URL}/sso`);
-        if (res.status === 403) {
-          // 账号未开通本站：定向回认证中心（已登录时自动进入面板查看提示）
-          const data = await res.json().catch(() => ({}));
-          const target = data.loginUrl || ssoConfig.loginUrl;
-          if (target) { window.location.href = target; return true; }
-          return false;
-        }
-        if (res.status === 401) {
-          // 无中心票据 / 票据失效：清理本地遗留令牌，回落游客态
-          if (token) { token = null; localStorage.removeItem('token'); }
-          return false;
-        }
-        if (!res.ok) return false;
-        const data = await res.json();
-        if (!data.token) return false;
-        token = data.token;
-        localStorage.setItem('token', token);
-        updateNav();
-        return true;
-      } catch {
-        return false;
-      }
-    }
-
-    // 带认证的请求封装：自动附带令牌；服务端校准切换账号时经 X-New-Token 静默续签
-    async function authFetch(url, options = {}) {
-      options.headers = Object.assign({}, options.headers, { Authorization: `Bearer ${token}` });
-      const res = await fetch(url, options);
-      const newToken = res.headers.get('X-New-Token');
-      if (newToken) {
-        token = newToken;
-        localStorage.setItem('token', token);
-        updateNav();
-      }
-      return res;
-    }
-
-    function showCreateModal() {
-      document.getElementById('pasteContent').value = '';
-      document.getElementById('pasteLanguage').value = 'plaintext';
-      createModal.show();
-    }
-
-    async function doCreatePaste() {
-      const content = document.getElementById('pasteContent').value;
-      const language = document.getElementById('pasteLanguage').value;
-      if (!content.trim()) return alert('内容不能为空');
-      const res = await authFetch(`${API_URL}/pastes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, language })
-      });
-      if (!res.ok) {
-        let data = {};
-        try { data = await res.json(); } catch {}
-        if (res.status === 403) {
-          // 站点准入被撤销：定向回认证中心
-          const target = data.loginUrl || ssoConfig.loginUrl;
-          if (target) { window.location.href = target; return; }
-        }
-        if (res.status === 401) {
-          token = null;
-          localStorage.removeItem('token');
-          updateNav();
-        }
-        alert(data.error || `创建失败 (${res.status})`);
-        return;
-      }
-      const data = await res.json();
-      createModal.hide();
-      window.location.href = '?s=' + data.short_code;
-    }
-
-    document.getElementById('logoutBtn').onclick = () => {
-      token = null;
-      localStorage.removeItem('token');
-      // 全域登出：跳转认证中心退出页（销毁中心票据后回登录页）
-      window.location.href = ssoConfig.logoutUrl || '/';
-    };
-  </script>
+  <script defer src="/js/bootstrap.bundle.min.js"></script>
+  <script defer src="/js/prism.js"></script>
+  <script defer src="/js/components/prism-markup.min.js"></script>
+  <script defer src="/js/components/prism-css.min.js"></script>
+  <script defer src="/js/components/prism-clike.min.js"></script>
+  <script defer src="/js/components/prism-javascript.min.js"></script>
+  <script defer src="/js/components/prism-typescript.min.js"></script>
+  <script defer src="/js/components/prism-python.min.js"></script>
+  <script defer src="/js/components/prism-java.min.js"></script>
+  <script defer src="/js/components/prism-c.min.js"></script>
+  <script defer src="/js/components/prism-cpp.min.js"></script>
+  <script defer src="/js/components/prism-csharp.min.js"></script>
+  <script defer src="/js/components/prism-go.min.js"></script>
+  <script defer src="/js/components/prism-rust.min.js"></script>
+  <script defer src="/js/components/prism-markup-templating.min.js"></script>
+  <script defer src="/js/components/prism-php.min.js"></script>
+  <script defer src="/js/components/prism-ruby.min.js"></script>
+  <script defer src="/js/components/prism-swift.min.js"></script>
+  <script defer src="/js/components/prism-kotlin.min.js"></script>
+  <script defer src="/js/components/prism-scss.min.js"></script>
+  <script defer src="/js/components/prism-json.min.js"></script>
+  <script defer src="/js/components/prism-yaml.min.js"></script>
+  <script defer src="/js/components/prism-markdown.min.js"></script>
+  <script defer src="/js/components/prism-sql.min.js"></script>
+  <script defer src="/js/components/prism-bash.min.js"></script>
+  <script defer src="/js/components/prism-powershell.min.js"></script>
+  <script defer src="/js/components/prism-docker.min.js"></script>
+  <script defer src="/js/theme.js"></script>
+  <script defer src="/js/vendor/marked.min.js"></script>
+  <script defer src="/js/vendor/purify.min.js"></script>
+  <script defer src="/js/vendor/qrcode.min.js"></script>
+  <script defer src="/js/app.js"></script>
 </body>
 </html>
