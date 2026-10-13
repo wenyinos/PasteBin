@@ -97,7 +97,7 @@ app.use((req, res, next) => {
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   // HSTS 由应用下发而非反向代理：反代配置可能被面板重新生成而丢失此头。
   // 明文响应中的 HSTS 按 RFC 6797 会被浏览器忽略，因此无需按环境判断。
-  res.setHeader('Strict-Transport-Security', 'max-age=31536000');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   res.setHeader('Content-Security-Policy',
     "default-src 'self'; " +
     "script-src 'self' 'unsafe-inline'; " +
